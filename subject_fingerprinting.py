@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 import pickle
 
 
@@ -48,15 +47,21 @@ def main(config):
             temp = line.strip()
             names_rdcm.append(temp[:-3])
             
+    names_crvae = []
+    with open(os.path.join(config['path_augmented_crvae'],'names_CRVAE.txt'), 'r') as f:
+        for line in f:
+            temp = line.strip()
+            names_crvae.append(temp[:-3])
+            
     augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN.pt'))
-    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_cr_vae.pt'))
+    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CRVAE.pt'))
     
     names_SF = []
     for name in names:
-        if name in names_rdcm and 'rest1' in name:
+        if name in names_rdcm and name in names_crvae and 'rest1' in name:
             name2 = name
             name2 = name2.replace('rest1', 'rest2')
-            if name2 in names and name2 in names_rdcm:
+            if name2 in names and name2 in names_rdcm and name2 in names_crvae:
                 names_SF.append(name[:6])
     
     names_SF = names_SF[:128]
@@ -76,10 +81,8 @@ def main(config):
         for p in pos:
             if "rest1" in names[p]:
                 data1.append(train_data[p])
-                data1_CRVAE.append(augmented_crvae[p])
             elif "rest2" in names[p]:
                 data2.append(train_data[p])
-                data2_CRVAE.append(augmented_crvae[p])
                 
                 
     ids = names_rdcm.copy()
@@ -92,6 +95,17 @@ def main(config):
                 data1_rDCM.append(augmented_rdcm[p])
             elif "rest2" in names_rdcm[p]:
                 data2_rDCM.append(augmented_rdcm[p])
+                
+    ids = names_crvae.copy()
+    for i,idd in enumerate(ids):
+        ids[i] = idd[:6]
+    for name in names_SF:
+        pos = np.where(np.array(ids) == name)[0]
+        for p in pos:
+            if "rest1" in names_crvae[p]:
+                data1_CRVAE.append(augmented_crvae[p])
+            elif "rest2" in names_crvae[p]:
+                data2_CRVAE.append(augmented_crvae[p])
                 
     data1 = torch.from_numpy(np.stack(data1))
     data2 = torch.from_numpy(np.stack(data2))
@@ -179,41 +193,10 @@ def main(config):
     result['Noise-6dB'] = accuracies_noise05
     result['Noise-3dB'] = accuracies_noise075
     
+    os.makedirs(os.path.join(config['path_save'], 'SF'), exist_ok=True)
     with open(os.path.join(config['path_save'], 'SF', 'results.pkl'), 'wb') as f:
         pickle.dump(result, f)
     
-    '''
-    plt.plot(data1[0][:400,0])
-    plt.title('Original')
-    plt.savefig(os.path.join('plots', 'time_series_original.png'))
-    plt.show()
-    plt.close()
-    
-    plt.plot(data1_noise05[0][:400,0])
-    plt.title('Noise 0.5')
-    plt.savefig(os.path.join('plots', 'time_series_noise0.5.png'))
-    plt.show()
-    plt.close()
-        
-    
-    plt.plot(data1_noise075[0][:400,0])
-    plt.title('Noise 0.75')
-    plt.savefig(os.path.join('plots', 'time_series_noise0.75.png'))
-    plt.show()
-    plt.close()
-    
-    plt.plot(data1_CRVAE[0][:400,0])
-    plt.title('CR-VAE')
-    plt.savefig(os.path.join('plots', 'time_series_CRVAE.png'))
-    plt.show()
-    plt.close()
-    
-    plt.plot(data1_rDCM[0][:400,0])
-    plt.title('rDCM')
-    plt.savefig(os.path.join('plots', 'time_series_rDCM.png'))
-    plt.show()
-    plt.close()
-    ''' 
     return result
     
 if __name__ == '__main__':

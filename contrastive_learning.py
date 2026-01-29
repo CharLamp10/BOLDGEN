@@ -216,7 +216,7 @@ def main(config):
             names_crvae.append(temp[:-4])
             
     augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN.pt'))
-    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_cr_vae_new.pt'))
+    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CRVAE.pt'))
 
 
     T,R = test_data1[0].shape
