@@ -42,7 +42,7 @@ def main(config):
             out = pd.DataFrame(out, columns=columns)
             out = pd.concat((subIDs,visits,out), axis=1)
             os.makedirs(os.path.join(config['path'], 'ReX_files', 'tau' + str(tau)), exist_ok=True)
-            out.to_csv(os.path.join(config['path'], 'ReX_files', 'tau' + str(tau),'rex_rDCM_' + method + '.csv'))
+            out.to_csv(os.path.join(config['path'], 'ReX_files', 'tau' + str(tau),'rex_' + method + '.csv'))
 
                     
 if __name__ == "__main__":
