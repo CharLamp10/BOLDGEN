@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from scipy.signal import welch
 
 
 def plot_three_subplots(x, data, title, filename):
@@ -14,6 +15,31 @@ def plot_three_subplots(x, data, title, filename):
 
     axes[-1].set_xlabel('Time (sec)')
     fig.suptitle(title)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig(os.path.join('plots', filename), dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+def plot_three_subplots_psd(data, title, filename):
+    """
+    Plots Welch PSDs for three ROIs (0, 50, last) in a 3x1 subplot figure.
+    Uses only the first 400 samples, as in the original time-series plot.
+    """
+    fs = 1 / 1.5  # sampling frequency (Hz)
+
+    fig, axes = plt.subplots(3, 1, figsize=(8, 8), sharex=True)
+
+    indices = [0, 50, -1]
+    for ax, idx in zip(axes, indices):
+        # compute Welch PSD for this ROI
+        f, Pxx = welch(data[:400, idx], fs=fs)
+
+        ax.semilogy(f, Pxx)      # semilogy is common for PSDs, but you can use ax.plot(f, Pxx)
+        ax.set_ylabel(f'ROI {idx+1}')
+
+    axes[-1].set_xlabel('Frequency (Hz)')
+    fig.suptitle(title + ' (Welch PSD)')
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.savefig(os.path.join('plots', filename), dpi=600, bbox_inches='tight')
@@ -46,20 +72,28 @@ def main(config):
     x = np.linspace(0, 600, 400)
 
     plot_three_subplots(x, data, 'Original', 'time_series_original.png')
+    plot_three_subplots_psd(data, 'Original', 'psd_original.png')
 
     plot_three_subplots(x, data_noise05, 'Noise-6dB', 'time_series_Noise-6dB.png')
+    plot_three_subplots_psd(data_noise05, 'Noise-6dB', 'psd_Noise-6dB.png')
     
     plot_three_subplots(x, data_noise075, 'Noise-3dB', 'time_series_Noise-3dB.png')
+    plot_three_subplots_psd(data_noise075, 'Noise-3dB', 'psd_Noise-3dB.png')
     
     plot_three_subplots(x, data_timevae, 'TimeVAE', 'time_series_TimeVAE.png')
+    plot_three_subplots_psd(data_timevae, 'TimeVAE', 'psd_timevae.png')
     
     plot_three_subplots(x, data_timegan, 'TimeGAN', 'time_series_TimeGAN.png')
+    plot_three_subplots_psd(data_timegan, 'TimeGAN', 'psd_timegan.png')
     
-    plot_three_subplots(x, data_crvae, 'CR-VAE', 'time_series_CRVAE.png')
+    plot_three_subplots(x, data_crvae, 'CRVAE', 'time_series_CRVAE.png')
+    plot_three_subplots(x, data_crvae, 'CRVAE', 'psd_CRVAE.png')
     
     plot_three_subplots(x, data_diffusion_ts, 'Diffusion-TS', 'time_series_Diffusion-TS.png')
+    plot_three_subplots(x, data_diffusion_ts, 'Diffusion-TS', 'psd_Diffusion-TS.png')
     
     plot_three_subplots(x, data_rdcm, 'rDCM-GEN', 'time_series_rDCM-GEN.png')
+    plot_three_subplots(x, data_rdcm, 'rDCM-GEN', 'psd_rDCM-GEN.png')
 
 
 if __name__ == "__main__":
