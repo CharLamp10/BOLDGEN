@@ -87,13 +87,13 @@ def main(config):
     plot_three_subplots_psd(data_timegan, 'TimeGAN', 'psd_timegan.png')
     
     plot_three_subplots(x, data_crvae, 'CRVAE', 'time_series_CRVAE.png')
-    plot_three_subplots(x, data_crvae, 'CRVAE', 'psd_CRVAE.png')
+    plot_three_subplots_psd(data_crvae, 'CRVAE', 'psd_CRVAE.png')
     
     plot_three_subplots(x, data_diffusion_ts, 'Diffusion-TS', 'time_series_Diffusion-TS.png')
-    plot_three_subplots(x, data_diffusion_ts, 'Diffusion-TS', 'psd_Diffusion-TS.png')
+    plot_three_subplots_psd(data_diffusion_ts, 'Diffusion-TS', 'psd_Diffusion-TS.png')
     
     plot_three_subplots(x, data_rdcm, 'rDCM-GEN', 'time_series_rDCM-GEN.png')
-    plot_three_subplots(x, data_rdcm, 'rDCM-GEN', 'psd_rDCM-GEN.png')
+    plot_three_subplots_psd(data_rdcm, 'rDCM-GEN', 'psd_rDCM-GEN.png')
 
 
 if __name__ == "__main__":
