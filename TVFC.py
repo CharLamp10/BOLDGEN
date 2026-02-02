@@ -82,13 +82,15 @@ def main(config):
         
         scores = []
         centroids = []
-        for K in [2]:#,3,4,5,6]:
+        Ks = [2,3,4,5,6]
+        for K in Ks:
             cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
             scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
             centroids.append(cluster_centers)
             print(K)
             
         pos = np.where(np.array(scores) == np.max(scores))[0][0]
+        K = Ks[pos]
         centroids = centroids[pos]
         for i,centroid in enumerate(centroids):
             M = torch.zeros((R, R), dtype=x.dtype)
@@ -116,17 +118,9 @@ def main(config):
             x = np.stack(x_all)
             x = torch.from_numpy(x).float()
             
-            scores = []
-            centroids = []
-            for K in [2]:#,3,4,5,6]:
-                cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device = torch.device("cuda:0"))
-                scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
-                centroids.append(cluster_centers)
-                print(K)
+            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
                 
-            pos = np.where(np.array(scores) == np.max(scores))[0][0]
-            centroids = centroids[pos]
-            for i,centroid in enumerate(centroids):
+            for i,centroid in enumerate(cluster_centers):
                 M = torch.zeros((R, R), dtype=x.dtype)
                 M[triu_indices[0], triu_indices[1]] = centroid
                 M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
@@ -153,17 +147,9 @@ def main(config):
         x = np.stack(x_all)
         x = torch.from_numpy(x).float()
         
-        scores = []
-        centroids = []
-        for K in [2]:#,3,4,5,6]:
-            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device = torch.device("cuda:0"))
-            scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
-            centroids.append(cluster_centers)
-            print(K)
+        cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
             
-        pos = np.where(np.array(scores) == np.max(scores))[0][0]
-        centroids = centroids[pos]
-        for i,centroid in enumerate(centroids):
+        for i,centroid in enumerate(cluster_centers):
             M = torch.zeros((R, R), dtype=x.dtype)
             M[triu_indices[0], triu_indices[1]] = centroid
             M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
@@ -186,19 +172,10 @@ def main(config):
                 x_all.append(x)
         x = np.stack(x_all)
         x = torch.from_numpy(x).float()
-        
-        scores = []
-        centroids = []
-        for K in [2]:#,3,4,5,6]:
-            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device = torch.device("cuda:0"))
-            scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
-            centroids.append(cluster_centers)
-            print(K)
-        
+    
+        cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)   
             
-        pos = np.where(np.array(scores) == np.max(scores))[0][0]
-        centroids = centroids[pos]
-        for i,centroid in enumerate(centroids):
+        for i,centroid in enumerate(cluster_centers):
             M = torch.zeros((R, R), dtype=x.dtype)
             M[triu_indices[0], triu_indices[1]] = centroid
             M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
@@ -222,18 +199,9 @@ def main(config):
         x = np.stack(x_all)
         x = torch.from_numpy(x).float()
         
-        scores = []
-        centroids = []
-        for K in [2]:#,3,4,5,6]:
-            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device = torch.device("cuda:0"))
-            scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
-            centroids.append(cluster_centers)
-            print(K)
-        
-            
-        pos = np.where(np.array(scores) == np.max(scores))[0][0]
-        centroids = centroids[pos]
-        for i,centroid in enumerate(centroids):
+        cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
+
+        for i,centroid in enumerate(cluster_centers):
             M = torch.zeros((R, R), dtype=x.dtype)
             M[triu_indices[0], triu_indices[1]] = centroid
             M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
@@ -257,18 +225,9 @@ def main(config):
         x = np.stack(x_all)
         x = torch.from_numpy(x).float()
         
-        scores = []
-        centroids = []
-        for K in [2]:#,3,4,5,6]:
-            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device = torch.device("cuda:0"))
-            scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
-            centroids.append(cluster_centers)
-            print(K)
+        cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
         
-            
-        pos = np.where(np.array(scores) == np.max(scores))[0][0]
-        centroids = centroids[pos]
-        for i,centroid in enumerate(centroids):
+        for i,centroid in enumerate(cluster_centers):
             M = torch.zeros((R, R), dtype=x.dtype)
             M[triu_indices[0], triu_indices[1]] = centroid
             M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
@@ -292,17 +251,9 @@ def main(config):
         x = np.stack(x_all)
         x = torch.from_numpy(x).float()
         
-        scores = []
-        centroids = []
-        for K in [2]:#,3,4,5,6]:
-            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device = torch.device("cuda:0"))
-            scores.append(silhouette_score_torch(x, cluster_ids, cluster_centers))
-            centroids.append(cluster_centers)
-            print(K)
-        
-        pos = np.where(np.array(scores) == np.max(scores))[0][0]
-        centroids = centroids[pos]
-        for i,centroid in enumerate(centroids):
+        cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
+            
+        for i,centroid in enumerate(cluster_centers):
             M = torch.zeros((R, R), dtype=x.dtype)
             M[triu_indices[0], triu_indices[1]] = centroid
             M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
@@ -328,6 +279,6 @@ if __name__ == '__main__':
     config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
     config['atlas'] = 'SCH'
     config['device'] = "cuda:1"
-    config['methods'] = ['CRVAE','TimeGAN','Diffusion-TS']#['HCP', 'rDCM-GEN', 'CRVAE', 'Noise-3dB', 'Noise-6dB', 'TimeVAE', 'TimeGAN', 'Diffusion-TS']
+    config['methods'] = ['HCP', 'rDCM-GEN', 'CRVAE', 'Noise-3dB', 'Noise-6dB', 'TimeVAE', 'TimeGAN', 'Diffusion-TS']
     results = main(config)   
     
