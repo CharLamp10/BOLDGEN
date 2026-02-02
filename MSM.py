@@ -378,7 +378,10 @@ def main(config):
             train_data = np.load(config['path_augmented_timegan'])
             train_data = torch.from_numpy(train_data).permute(0,2,1)
             train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
-        
+        elif method == "Diffusion-TS":
+            train_data = np.load(config['path_augmented_diffusion_ts'])
+            train_data = torch.from_numpy(train_data).permute(0,2,1)
+            train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
         
         train_dataset = fMRIDataset(train_data)
         val_dataset = fMRIDataset(val_data)
@@ -476,8 +479,9 @@ if __name__ == '__main__':
     config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new/augmented_rDCM-GEN.pt'
     config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_cr_vae_new.pt'
     config['path_augmented_timevae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
-    config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN_30000.npy'
-    config['methods'] = ['TimeGAN']#,'TimeVAE','CRVAE','Noise-6dB', 'Noise-3dB', 'rDCM-GEN']
+    config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
+    config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
+    config['methods'] = ['TimeGAN','TimeVAE','CRVAE','Noise-6dB', 'Noise-3dB', 'Diffusion-TS', 'rDCM-GEN']
     config['T'] = 400
     config['R'] = 100
     config['atlas'] = 'SCH'

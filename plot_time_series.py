@@ -10,13 +10,13 @@ def plot_three_subplots(x, data, title, filename):
     indices = [0, 50, -1]
     for ax, idx in zip(axes, indices):
         ax.plot(x, data[:400, idx])
-        ax.set_ylabel(f'Index {idx}')
+        ax.set_ylabel(f'ROI {idx+1}')
 
     axes[-1].set_xlabel('Time (sec)')
     fig.suptitle(title)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.savefig(os.path.join('plots', filename))
+    plt.savefig(os.path.join('plots', filename), dpi=600, bbox_inches='tight')
     plt.show()
 
 
@@ -32,6 +32,7 @@ def main(config):
     augmented_crvae = torch.load(config['path_augmented_crvae']).numpy()
     augmented_timevae = np.load(config['path_augmented_timevae'])['data']
     augmented_timegan = np.load(config['path_augmented_timegan'])
+    augmented_diffusion_ts = np.load(config['path_augmented_diffusion_ts'])
     
     data = train_data[0]
     data_rdcm = augmented_rdcm[0,0]
@@ -40,6 +41,7 @@ def main(config):
     data_noise075 = train_data[0] + np.random.randn(*data.shape)*0.75
     data_timevae = augmented_timevae[1000]
     data_timegan = augmented_timegan[1000]
+    data_diffusion_ts = augmented_diffusion_ts[1000]
     
     x = np.linspace(0, 600, 400)
 
@@ -55,6 +57,8 @@ def main(config):
     
     plot_three_subplots(x, data_crvae, 'CR-VAE', 'time_series_CRVAE.png')
     
+    plot_three_subplots(x, data_diffusion_ts, 'Diffusion-TS', 'time_series_Diffusion-TS.png')
+    
     plot_three_subplots(x, data_rdcm, 'rDCM-GEN', 'time_series_rDCM-GEN.png')
 
 
@@ -65,5 +69,6 @@ if __name__ == "__main__":
     config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new/augmented_rDCM-GEN.pt'
     config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_CRVAE.pt'
     config['path_augmented_timevae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
-    config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN_30000.npy'
+    config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
+    config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
     main(config)
