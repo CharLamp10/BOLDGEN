@@ -46,7 +46,7 @@ def main(config):
     
     data = train_data[0]
     data_rdcm = augmented_rdcm[0,0]
-    data_crvae = augmented_crvae[0,0]
+    data_crvae = augmented_crvae[0,5]
     data_noise05 = train_data[0] + np.random.randn(*data.shape)*0.5
     data_noise075 = train_data[0] + np.random.randn(*data.shape)*0.75
     data_timevae = augmented_timevae[1000]
