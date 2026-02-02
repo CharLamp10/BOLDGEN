@@ -66,7 +66,7 @@ def main(config):
     data_crvae = data_crvae[:,0,:,:]
     data_timeGAN = augmented_timeGAN[:200]
     data_timeVAE = augmented_timeVAE[:200]
-    data_diffusionTS = augmented_diffusionTS[1000:1200]
+    data_diffusionTS = augmented_diffusionTS[:200]
     triu_indices = torch.triu_indices(R, R, offset=1)
     
     if 'HCP' in config['methods']:
