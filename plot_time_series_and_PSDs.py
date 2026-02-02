@@ -17,7 +17,7 @@ mpl.rcParams.update({
 def plot_three_subplots(x, data, title, filename):
     fig, axes = plt.subplots(3, 1, figsize=(8, 8), sharex=True)
 
-    indices = [0, 50, -1]
+    indices = [0, 49, 99]
     for ax, idx in zip(axes, indices):
         ax.plot(x, data[:400, idx])
         ax.set_ylabel(f'ROI {idx+1}')
