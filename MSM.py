@@ -289,10 +289,10 @@ def validate(model, dataloader, device, mask_params, idxs):
             masks.append(mask_t.cpu())
             pred = model(batch, mask_t)
             predicted.append(pred.cpu())
-            _, m_mse, unm_mse = compute_loss(pred, batch, mask_t,
+            _, masked_mse, unmasked_mse = compute_loss(pred, batch, mask_t,
                                                mask_loss_weight=0.7, unmask_loss_weight=0.3) #1.0, 0.0
             for p, b, mt in zip(pred, batch, mask_t):
-                _,masked_mse,unmasked_mse = compute_loss(p.unsqueeze(0), b.unsqueeze(0), mt.unsqueeze(0),
+                _,m_mse,unm_mse = compute_loss(p.unsqueeze(0), b.unsqueeze(0), mt.unsqueeze(0),
                                        mask_loss_weight=0.7, unmask_loss_weight=0.3)
                 masked_mses.append(m_mse.item())
                 unmasked_mses.append(unm_mse.item())
@@ -445,6 +445,7 @@ def main(config):
         results = {}
         results['original'] = original.numpy()
         results['pred'] = predicted.numpy()
+        results['mask'] = idxs
         results['test_masked_mse'] = masked_mses
         results['test_unmasked_mse'] = unmasked_mses
         
@@ -487,12 +488,12 @@ def main(config):
                     zorder=3
                 )
             
-                ax.set_title(f"ROI {roi_i + 1}")
+                ax.set_title(f"ROI {roi_i + 1}", fontsize=14)
             
             # Legend only in the first subplot
-            axes[0].legend(loc='upper right')
+            axes[0].legend(loc='upper right', fontsize=12)
             
-            axes[-1].set_xlabel('Time')
+            axes[-1].set_xlabel('Time (sec)', fontsize=14)
             
             plt.tight_layout()
             
@@ -520,7 +521,7 @@ if __name__ == '__main__':
     config['path_augmented_timevae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
     config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
     config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
-    config['methods'] = ['Noise-3dB', 'CRVAE', 'TimeVAE', 'TimeGAN','Diffusion-TS']#'Noise-3dB','Diffusion-TS','rDCM-GEN'] # ['TimeGAN','TimeVAE','CRVAE']#'Noise-6dB','Noise-3dB','Diffusion-TS','rDCM-GEN']
+    config['methods'] = ['rDCM-GEN'] #['Noise-6dB','Noise-3dB', 'CRVAE', 'TimeVAE', 'TimeGAN','Diffusion-TS','rDCM-GEN'] 
     config['T'] = 400
     config['R'] = 100
     config['atlas'] = 'SCH'

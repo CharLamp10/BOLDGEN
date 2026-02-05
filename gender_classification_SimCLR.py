@@ -162,7 +162,6 @@ if __name__ == '__main__':
     config['atlas'] = 'SCH' #AICHA, AAL
     config['batch_size'] = 128
     config['shuffle'] = True
-    config['epochs'] = 150
     config['taus'] = [0.05, 0.1, 0.15]
     config['model_config'] = {}
     config['model_config']['num_layers'] = 4
