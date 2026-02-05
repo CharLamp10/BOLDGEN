@@ -256,8 +256,8 @@ def train_one_epoch(model, dataloader, optimizer, device, epoch, mask_params, gr
         optimizer.zero_grad()
         pred = model(batch, mask_t)
         loss, masked_mse, unmasked_mse = compute_loss(pred, batch, mask_t,
-                                                      mask_loss_weight=1.0,
-                                                      unmask_loss_weight=0.0)
+                                                      mask_loss_weight=0.7, #1.0
+                                                      unmask_loss_weight=0.3) #0.0
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
@@ -270,12 +270,13 @@ def train_one_epoch(model, dataloader, optimizer, device, epoch, mask_params, gr
 
 def validate(model, dataloader, device, mask_params, idxs):
     model.eval()
-    running_loss = 0.0
     running_masked = 0.0
+    running_unmasked = 0.0
     original = []
     predicted = []
     masks = []
-    mses = []
+    masked_mses = []
+    unmasked_mses = []
     n = len(dataloader)
     with torch.no_grad():
         for i, batch in enumerate(dataloader):
@@ -288,17 +289,18 @@ def validate(model, dataloader, device, mask_params, idxs):
             masks.append(mask_t.cpu())
             pred = model(batch, mask_t)
             predicted.append(pred.cpu())
-            loss, masked_mse, _ = compute_loss(pred, batch, mask_t,
-                                               mask_loss_weight=1.0, unmask_loss_weight=0.0)
+            _, m_mse, unm_mse = compute_loss(pred, batch, mask_t,
+                                               mask_loss_weight=0.7, unmask_loss_weight=0.3) #1.0, 0.0
             for p, b, mt in zip(pred, batch, mask_t):
-                mse,_,_ = compute_loss(p.unsqueeze(0), b.unsqueeze(0), mt.unsqueeze(0),
-                                       mask_loss_weight=1.0, unmask_loss_weight=0.0)
-                mses.append(mse.item())
-            running_loss += loss.item()
+                _,masked_mse,unmasked_mse = compute_loss(p.unsqueeze(0), b.unsqueeze(0), mt.unsqueeze(0),
+                                       mask_loss_weight=0.7, unmask_loss_weight=0.3)
+                masked_mses.append(m_mse.item())
+                unmasked_mses.append(unm_mse.item())
             running_masked += float(masked_mse)
+            running_unmasked += float(unmasked_mse)
     original = torch.cat(original, dim=0)
     predicted = torch.cat(predicted, dim=0)
-    return running_loss / n, running_masked / n, original, predicted, mask_t, mses
+    return running_masked / n, running_unmasked / n, original, predicted, mask_t, masked_mses, unmasked_mses
 
 
 # -------------------------
@@ -407,24 +409,23 @@ def main(config):
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=max(1, config['epochs'] // 3), gamma=0.5)
     
         mask_params = {'n_mask_points': config['n_mask_points']}
-        train_losses, val_losses = [], []
-        train_masked, val_masked = [], []
+        train_losses = []
+        val_masked, val_unmasked = [], []
     
         best_val = float('inf')
         for epoch in range(1, config['epochs'] + 1):
             tr_loss, tr_masked = train_one_epoch(model, train_loader, optimizer, device, epoch, mask_params, grad_clip=1.0)
             scheduler.step()
-            val_loss, val_masked_mse,_,_,_,_ = validate(model, val_loader, device, mask_params, idxs=idxs)
+            val_masked_mse, val_unmasked_mse,_,_,_,_,_ = validate(model, val_loader, device, mask_params, idxs=idxs)
     
             train_losses.append(tr_loss)
-            val_losses.append(val_loss)
-            train_masked.append(tr_masked)
             val_masked.append(val_masked_mse)
+            val_unmasked.append(val_unmasked_mse)
     
-            print(f"Epoch {epoch:02d} | Train loss {tr_loss:.6f} masked_mse {tr_masked:.6f} | Val loss {val_loss:.6f} masked_mse {val_masked_mse:.6f}")
+            print(f"Epoch {epoch:02d} | Train loss {tr_loss:.6f} masked_mse {tr_masked:.6f} | Val Masked {val_masked_mse:.6f} Val Unasked {val_unmasked_mse:.6f}")
     
-            if val_loss < best_val:
-                best_val = val_loss
+            if val_masked_mse + val_unmasked_mse < best_val:
+                best_val = val_masked_mse + val_unmasked_mse
                 best_state_dict = copy.deepcopy(model.state_dict())
     
         print("Training finished. Best val loss:", best_val)
@@ -439,12 +440,13 @@ def main(config):
                                      max_timepoints=config['T'])
         model.to(device)
         model.load_state_dict(best_state_dict)
-        test_loss, test_masked_mse, original, predicted, mask_t, mses = validate(model, test_loader, device, mask_params, idxs)
+        test_loss, test_masked_mse, original, predicted, mask_t, masked_mses, unmasked_mses = validate(model, test_loader, device, mask_params, idxs)
     
         results = {}
         results['original'] = original.numpy()
         results['pred'] = predicted.numpy()
-        results['test_masked_mse'] = mses
+        results['test_masked_mse'] = masked_mses
+        results['test_unmasked_mse'] = unmasked_mses
         
         if config['save_models']:
             if not os.path.exists(os.path.join(config['path_save'],'models','MSM')):
@@ -457,18 +459,55 @@ def main(config):
                 pickle.dump(results,f)
         
         for sample_i in range(1,11):
-            for roi_i in [0,49,99]:
-                t = np.arange(config['T'])
-                fig, ax = plt.subplots(1, 1, figsize=(12, 3))
-                ax.plot(t, original.cpu().numpy()[sample_i, roi_i], label='target')
-                ax.plot(t, predicted.cpu().numpy()[sample_i, roi_i], label='pred', alpha=0.8)
+            rois = [0, 49, 99]
+            t = np.arange(config['T'])
+            
+            fig, axes = plt.subplots(3, 1, figsize=(12, 8), sharex=True)
+            
+            for ax, roi_i in zip(axes, rois):
+                ax.plot(
+                    t,
+                    original.cpu().numpy()[sample_i, roi_i],
+                    label='target'
+                )
+                ax.plot(
+                    t,
+                    predicted.cpu().numpy()[sample_i, roi_i],
+                    label='pred',
+                    alpha=0.8
+                )
+            
                 masked = mask_t.cpu().numpy()[sample_i]
-                ax.scatter(t[masked], original.numpy()[sample_i, roi_i][masked], color='red', s=20, label='masked (target)', zorder=3)
-                ax.set_title(f"Subject {sample_i} ROI {roi_i+1} reconstruction (point mask)")
-                ax.legend()
-                os.makedirs(os.path.join(config['path_save'], 'reconstructed_plots', method), exist_ok=True)
-                plt.savefig(os.path.join(config['path_save'], 'reconstructed_plots', method,  'subject_' + str(sample_i) + '_roi_' + str(roi_i) + '.png'))
-                plt.show()
+                ax.scatter(
+                    t[masked],
+                    original.cpu().numpy()[sample_i, roi_i][masked],
+                    color='red',
+                    s=20,
+                    label='masked',
+                    zorder=3
+                )
+            
+                ax.set_title(f"ROI {roi_i + 1}")
+            
+            # Legend only in the first subplot
+            axes[0].legend(loc='upper right')
+            
+            axes[-1].set_xlabel('Time')
+            
+            plt.tight_layout()
+            
+            if config['save_plots']:
+                save_dir = os.path.join('plots', 'reconstructed_plots', method)
+                os.makedirs(save_dir, exist_ok=True)
+                plt.savefig(
+                    os.path.join(save_dir, f'subject_{sample_i}_rois.png'),
+                    dpi=600,
+                    bbox_inches='tight'
+                )
+            
+            plt.show()
+
+
     
 
 
@@ -477,11 +516,11 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
     config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new/augmented_rDCM-GEN.pt'
-    config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_cr_vae_new.pt'
+    config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_CRVAE.pt'
     config['path_augmented_timevae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
     config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
     config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
-    config['methods'] = ['TimeGAN','TimeVAE','CRVAE','Noise-6dB', 'Noise-3dB', 'Diffusion-TS', 'rDCM-GEN']
+    config['methods'] = ['Noise-3dB', 'CRVAE', 'TimeVAE', 'TimeGAN','Diffusion-TS']#'Noise-3dB','Diffusion-TS','rDCM-GEN'] # ['TimeGAN','TimeVAE','CRVAE']#'Noise-6dB','Noise-3dB','Diffusion-TS','rDCM-GEN']
     config['T'] = 400
     config['R'] = 100
     config['atlas'] = 'SCH'
@@ -489,14 +528,15 @@ if __name__ == '__main__':
     config['epochs'] = 200
     config['lr'] = 5e-4
     config['weight_decay'] = 1e-5
-    config['n_mask_points'] = 50
+    config['n_mask_points'] = 100
     config['model_config'] = {}
-    config['model_config']['n_enc_layers'] = 3
-    config['model_config']['n_dec_layers'] = 3
+    config['model_config']['n_enc_layers'] = 5
+    config['model_config']['n_dec_layers'] = 5
     config['model_config']['nheads'] = 4
     config['model_config']['dropout'] = 0.1
-    config['device'] = "cuda:0"
+    config['device'] = "cuda:3"
     config['save_results'] = True
     config['save_models'] = True
+    config['save_plots'] = True
     main(config)
     
