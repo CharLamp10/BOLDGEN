@@ -4,7 +4,7 @@ library(ggplot2)
 
 path = "C:\\Users\\100063082\\Desktop\\rDCM-GEN_results\\ReX_files"
 path_save = "C:\\Users\\100063082\\Desktop\\rDCM-GEN\\plots"
-tau = 0.1
+tau = 0.05
 
 path_crvae <- file.path(path, paste0("ICC_CRVAE_tau", tau, ".csv"))
 data_crvae <- fread(path_crvae)
