@@ -307,7 +307,8 @@ def validate(model, dataloader, device, mask_params, idxs):
 # Main
 # -------------------------
 def main(config):
-    device = torch.device(config['device'])    
+    device = torch.device(config['device'])
+    np.random.seed(42)
     idxs = np.random.choice(
         config['T'], size=config['n_mask_points'], replace=False
     )
@@ -460,10 +461,13 @@ def main(config):
                 pickle.dump(results,f)
         
         for sample_i in range(1,11):
-            rois = [0, 49, 99]
+            rois = [0, 99]
             t = np.arange(config['T'])
             
-            fig, axes = plt.subplots(3, 1, figsize=(12, 8), sharex=True)
+            fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+            
+            for ax in axes:
+                ax.tick_params(axis='both', which='major', labelsize=18)
             
             for ax, roi_i in zip(axes, rois):
                 ax.plot(
@@ -488,12 +492,12 @@ def main(config):
                     zorder=3
                 )
             
-                ax.set_title(f"ROI {roi_i + 1}", fontsize=14)
+                ax.set_title(f"ROI {roi_i + 1}", fontsize=22)
             
             # Legend only in the first subplot
-            axes[0].legend(loc='upper right', fontsize=12)
+            #axes[0].legend(loc='upper right', fontsize=12)
             
-            axes[-1].set_xlabel('Time (sec)', fontsize=14)
+            axes[-1].set_xlabel('Time (sec)', fontsize=22)
             
             plt.tight_layout()
             
@@ -501,7 +505,7 @@ def main(config):
                 save_dir = os.path.join('plots', 'reconstructed_plots', method)
                 os.makedirs(save_dir, exist_ok=True)
                 plt.savefig(
-                    os.path.join(save_dir, f'subject_{sample_i}_rois.png'),
+                    os.path.join(save_dir, method + '_subject_' + str(sample_i) + '_rois.png'),
                     dpi=600,
                     bbox_inches='tight'
                 )
