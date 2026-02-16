@@ -248,7 +248,7 @@ def main(config):
     
     for tau in config['taus']:
         for method in config['methods']:
-            if method == 'rDCM':
+            if method == 'rDCM-GEN':
                 batch_sampler = BatchSampler(names_rdcm.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
             elif method == 'CRVAE':
                 batch_sampler = BatchSampler(names_crvae.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
@@ -349,14 +349,14 @@ def main(config):
             results['val_results_all'] = res_all
             
             if save_models:
-                if not os.path.exists(os.path.join(config['path_save'],'models','SimCLR')):
-                    os.makedirs(os.path.join(config['path_save'],'models','SimCLR'),exist_ok=True)   
-                torch.save(max_val_acc_model, os.path.join(config['path_save'],'models','SimCLR','model_' + method + '_tau' + str(tau) + '.pth'))
+                if not os.path.exists(os.path.join(config['path_save'],'models','SimCLR2')):
+                    os.makedirs(os.path.join(config['path_save'],'models','SimCLR2'),exist_ok=True)   
+                torch.save(max_val_acc_model, os.path.join(config['path_save'],'models','SimCLR2','model_' + method + '_tau' + str(tau) + '.pth'))
             
             if save_results:
-                if not os.path.exists(os.path.join(config['path_save'],'results_HCP','SimCLR')):
-                    os.makedirs(os.path.join(config['path_save'],'results_HCP','SimCLR'),exist_ok=True)   
-                with open(os.path.join(config['path_save'],'results_HCP','SimCLR','results_' + method + '_tau' + str(tau) + '.pkl'), 'wb') as f:
+                if not os.path.exists(os.path.join(config['path_save'],'SimCLR2')):
+                    os.makedirs(os.path.join(config['path_save'],'SimCLR2'),exist_ok=True)   
+                with open(os.path.join(config['path_save'],'SimCLR2','results_' + method + '_tau' + str(tau) + '.pkl'), 'wb') as f:
                     pickle.dump(results,f)
 
 
@@ -366,12 +366,12 @@ if __name__ == '__main__':
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
     config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new'
     config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models'
-    config['methods'] = ['CRVAE','Noise-6dB', 'Noise-3dB', 'rDCM-GEN']
+    config['methods'] = ['CRVAE','Noise-6dB', 'Noise-3dB'] #['rDCM-GEN']  
     config['atlas'] = 'SCH'
     config['batch_size'] = 128
     config['shuffle'] = True
     config['epochs'] = 200
-    config['taus'] = [0.05, 0.1, 0.15]
+    config['taus'] = [0.1, 0.15]
     config['lr'] = 1e-4
     config['warm_up_epochs'] = 10
     config['eval_epochs'] = list(range(1,config['epochs']+1))
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     config['model_config']['dim_feedforward'] = 1024
     config['model_config']['out_dim'] = 4096
     config['model_config']['D'] = 512
-    config['device'] = "cuda:0"
+    config['device'] = "cuda:3"
     config['save_results'] = True
     config['save_models'] = True
     main(config)
