@@ -2,8 +2,8 @@ library(data.table)
 library(ReX)
 library(ggplot2)
 
-path = "C:\\Users\\100063082\\Desktop\\rDCM-GEN_results\\ReX_files"
-tau = 0.15
+path = "C:\\Users\\100063082\\Desktop\\rDCM-GEN_results\\ReX_files2"
+tau = 0.05
 
 #Noise 0.5
 path_noise05 <- file.path(path, paste0("tau", tau), "rex_Noise-6dB.csv")

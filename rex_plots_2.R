@@ -2,9 +2,9 @@ library(data.table)
 library(ReX)
 library(ggplot2)
 
-path = "C:\\Users\\100063082\\Desktop\\rDCM-GEN_results\\ReX_files"
-path_save = "C:\\Users\\100063082\\Desktop\\rDCM-GEN\\plots\\ReX"
-tau = 0.05
+path = "C:\\Users\\100063082\\Desktop\\rDCM-GEN_results\\ReX_files2"
+path_save = "C:\\Users\\100063082\\Desktop\\rDCM-GEN\\plots\\ReX2"
+tau = 0.15
 
 path_crvae <- file.path(path, paste0("ICC_CRVAE_tau", tau, ".csv"))
 data_crvae <- fread(path_crvae)
