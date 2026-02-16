@@ -131,7 +131,7 @@ def main(config):
         for method in config['methods']:   
             result = []
             for i in range(10):
-                path_pretrained = os.path.join(config['path_save'],'models', 'SimCLR', 'model_' + method + '_tau' + str(tau) + '.pth') 
+                path_pretrained = os.path.join(config['path_save'],'models', 'SimCLR2', 'model_' + method + '_tau' + str(tau) + '.pth') 
                 state_dict = torch.load(path_pretrained)  
                 model_config = config['model_config']
                 encoder_model = Transformer(R,
@@ -148,9 +148,9 @@ def main(config):
             results['result'] = result
             
             if save_results:
-                if not os.path.exists(os.path.join(config['path_save'],'Gender','SimCLR', 'tau_' + str(tau))):
-                    os.makedirs(os.path.join(config['path_save'],'Gender','SimCLR', 'tau_' + str(tau)), exist_ok=True)   
-                with open(os.path.join(config['path_save'],'Gender','SimCLR', 'tau_' + str(tau),'results_' + method + '.pkl'), 'wb') as f:
+                if not os.path.exists(os.path.join(config['path_save'],'Gender','SimCLR2', 'tau_' + str(tau))):
+                    os.makedirs(os.path.join(config['path_save'],'Gender','SimCLR2', 'tau_' + str(tau)), exist_ok=True)   
+                with open(os.path.join(config['path_save'],'Gender','SimCLR2', 'tau_' + str(tau),'results_' + method + '.pkl'), 'wb') as f:
                     pickle.dump(results,f)
 
 

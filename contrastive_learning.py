@@ -366,7 +366,7 @@ if __name__ == '__main__':
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
     config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new'
     config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models'
-    config['methods'] = ['CRVAE','Noise-6dB', 'Noise-3dB'] #['rDCM-GEN']  
+    config['methods'] = ['CRVAE','Noise-6dB', 'Noise-3dB','rDCM-GEN']  
     config['atlas'] = 'SCH'
     config['batch_size'] = 128
     config['shuffle'] = True
