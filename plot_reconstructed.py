@@ -18,7 +18,7 @@ for method in methods:
     predicted = result['pred']
     mask_np = random_timepoint_mask(original.shape[0], T, n_mask_points=100, idxs=mask)
     
-    for sample_i in range(1,11):
+    for sample_i in range(1,20):
         rois = [0, 99]
         t = np.arange(T)
         
