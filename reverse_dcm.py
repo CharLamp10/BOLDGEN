@@ -307,7 +307,7 @@ class PinkNoiseParam(nn.Module):
 # Full Generative Model
 # -----------------------------
 class GenerativeModel(nn.Module):
-    def __init__(self, y, TR, neural_init=None, beta_init=1.0):
+    def __init__(self, y, TR, mask, neural_init=None, beta_init=1.0):
         super().__init__()
         self.T, self.R = y.shape
         self.TR = TR
@@ -318,6 +318,7 @@ class GenerativeModel(nn.Module):
         self.pink_from_normal = PinkNoiseParam(beta_init=beta_init)
         self.y = y
         self.TR = TR
+        self.mask = mask
 
 
     def forward(self, out):
@@ -329,9 +330,11 @@ class GenerativeModel(nn.Module):
         U = {
              'u': torch.zeros((self.T*16,self.R))
              }
-
+        
+        a = np.ones((self.R,self.R))
+        a[~self.mask] = 0
         args = {
-                'a': np.ones((self.R,self.R)),
+                'a': a,
                 'c': np.eye(self.R,self.R)
                 }
         DCM = tapas_rdcm_model_specification(Y, U, args)

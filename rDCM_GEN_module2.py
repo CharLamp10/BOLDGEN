@@ -249,7 +249,7 @@ def main(config):
     data = np.load(os.path.join(config['data_path'],'train_data_HCP_' + config['atlas'] + '_resampled.npz'))
     train_data = []
     for key in data:
-        y = data[key][88:-88]
+        y = data[key][183:-184]
         y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
         train_data.append(torch.from_numpy(y))
     
@@ -348,9 +348,9 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', type=str, 
                         default=r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP')
     parser.add_argument('--save_path', type=str, 
-                        default=r'/media/student1/Extreme Pro/VarCoNet_GNN_results')
+                        default=r'/media/student1/ExtremePro/VarCoNet_GNN_results')
     parser.add_argument('--save_path_new', type=str, 
-                        default=r'/media/student1/Extreme Pro')
+                        default=r'/media/student1/ExtremePro')
     parser.add_argument('--atlas', type=str, default='SCH')
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--TR', type=float, default=1.5)
