@@ -8,8 +8,8 @@ import pandas as pd
 def main(config):
     for method in config['methods']:
         for tau in config['taus']:
-            out1 = torch.load(os.path.join(config['path'], 'SimCLR2', method, 'tau'+str(tau), 'outputs1.pt')).numpy()
-            out2 = torch.load(os.path.join(config['path'], 'SimCLR2', method, 'tau'+str(tau), 'outputs2.pt')).numpy()
+            out1 = torch.load(os.path.join(config['path'], 'SimCLR_embeddings', config['case'], method, 'tau'+str(tau), 'outputs1.pt')).numpy()
+            out2 = torch.load(os.path.join(config['path'], 'SimCLR_embeddings', config['case'], method, 'tau'+str(tau), 'outputs2.pt')).numpy()
             out = np.zeros((2*out1.shape[0], out1.shape[1]))
             subIDs = []
             visits = []
@@ -41,16 +41,16 @@ def main(config):
             visits = pd.DataFrame(subIDs, columns=['visit'])
             out = pd.DataFrame(out, columns=columns)
             out = pd.concat((subIDs,visits,out), axis=1)
-            os.makedirs(os.path.join(config['path'], 'ReX_files2', 'tau' + str(tau)), exist_ok=True)
-            out.to_csv(os.path.join(config['path'], 'ReX_files2', 'tau' + str(tau),'rex_' + method + '.csv'))
+            os.makedirs(os.path.join(config['path'], 'ReX_files', config['case'], 'tau' + str(tau)), exist_ok=True)
+            out.to_csv(os.path.join(config['path'], 'ReX_files', config['case'], 'tau' + str(tau),'rex_' + method + '.csv'))
 
                     
 if __name__ == "__main__":
     config = {}
-    config['path'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
-    config['methods'] = ['CRVAE', 'Noise-3dB', 'Noise-6dB', 'rDCM-GEN']
-    config['length'] = 200
+    config['path'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
+    config['methods'] = ['CRVAE','rDCM-GEN']
     config['taus'] = [0.05, 0.1, 0.15]
+    config['case'] = "full_subsampled"
     main(config)
 
 

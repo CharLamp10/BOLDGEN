@@ -4,6 +4,51 @@ from kmeans_pytorch import kmeans
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.signal import butter, filtfilt, resample
+
+
+def preprocess_HCP(data, cat):
+    for i, y in enumerate(data):
+        if cat == "full_original":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+        elif cat == "half_original":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+        elif cat == "full_subsampled":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+        elif cat == "half_subsampled":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+        data[i] = y
+    return data
+
+
 
 def silhouette_score_torch(x, labels, centroids):
     N, D = x.shape
@@ -46,34 +91,37 @@ def main(config):
             temp = line.strip()
             names.append(temp[:-4])
             
-    data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '_resampled.npz'))
+    data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '.npz'))
     train_data = []
     for key in data:
-        temp = data[key][88:-88]
-        train_data.append((temp - np.mean(temp, axis=0, keepdims=True))/np.std(temp, axis=0, keepdims=True))
+        train_data.append(data[key][183:-184])
     
-            
-    augmented_rdcm = torch.load(config['path_augmented_rdcm'])
-    augmented_crvae = torch.load(config['path_augmented_crvae'])
-    augmented_timeVAE = torch.from_numpy(np.load(config['path_augmented_timeVae'])['data'])
-    augmented_timeGAN = torch.from_numpy(np.load(config['path_augmented_timeGan']))
-    augmented_diffusionTS = torch.from_numpy(np.load(config['path_augmented_diffusion_ts']))
+    train_data = preprocess_HCP(train_data[:config['subjects']], config['case'])
+
+    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
+    augmented_rdcmgen = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    augmented_timevae = np.load(os.path.join(config['path_augmented_timevae'], config['case'], 'timeVAE_' + config['case'] + '_prior_samples.npy'))
+    augmented_timegan = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
+    augmented_t2idiff = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
+    augmented_dsfm = np.load(os.path.join(config['path_augmented_dsfm'], config['case'], 'samples', 'samples.npy'))
+        
     
     T,R = train_data[0].shape            
-    data_rdcm = augmented_rdcm[:200]
-    data_rdcm = data_rdcm[:,0,:,:]
-    data_crvae = augmented_crvae[:200]
+    data_rdcmgen = augmented_rdcmgen[:config['subjects']]
+    data_rdcmgen = data_rdcmgen[:,0,:,:]
+    data_crvae = augmented_crvae[:config['subjects']]
     data_crvae = data_crvae[:,0,:,:]
-    data_timeGAN = augmented_timeGAN[:200]
-    data_timeVAE = augmented_timeVAE[:200]
-    data_diffusionTS = augmented_diffusionTS[:200]
+    data_timegan = torch.from_numpy(augmented_timegan[:config['subjects']])
+    data_timevae = torch.from_numpy(augmented_timevae[:config['subjects']])
+    data_t2idiff = torch.from_numpy(augmented_t2idiff[:config['subjects']])
+    data_dsfm = torch.from_numpy(augmented_dsfm[:config['subjects']])
     triu_indices = torch.triu_indices(R, R, offset=1)
     
     if 'HCP' in config['methods']:
         x_all = []
         for dat in train_data:
-            for i in range(T - 30 + 1):
-                x = dat[i:i+30]
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
                 x = x[triu_indices[0], triu_indices[1]]
                 x_all.append(x)
@@ -101,46 +149,16 @@ def main(config):
             sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", "state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
-    for noise in [0.5, 0.75]:
-        if (noise == 0.5 and 'Noise-6dB' in config['methods']) or (noise == 0.75 and 'Noise-3dB' in config['methods']):
-            x_all = []
-            for dat in train_data:
-                for i in range(T - 30 + 1):
-                    dat = dat + np.random.randn(*dat.shape)*noise
-                    x = dat[i:i+30]
-                    x = np.corrcoef(x.T)
-                    x = x[triu_indices[0], triu_indices[1]]
-                    x_all.append(x)
-            x = np.stack(x_all)
-            x = torch.from_numpy(x).float()
-            
-            cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
-                
-            for i,centroid in enumerate(cluster_centers):
-                M = torch.zeros((R, R), dtype=x.dtype)
-                M[triu_indices[0], triu_indices[1]] = centroid
-                M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
-                M.fill_diagonal_(1.0)   # if needed
-                plt.figure(figsize=(10, 8))
-                sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
-                plt.xticks([])
-                plt.yticks([])
-                os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-                if noise == 0.5:
-                    plt.savefig(os.path.join("plots","TVFC", "Noise-6dB_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
-                elif noise == 0.75:
-                    plt.savefig(os.path.join("plots","TVFC", "Noise-3dB_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
-                plt.show()
     
     if 'CRVAE' in config['methods']:
         x_all = []
         for dat in data_crvae:
-            for i in range(T - 30 + 1):
-                x = dat[i:i+30]
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
                 x = x[triu_indices[0], triu_indices[1]]
                 x_all.append(x)
@@ -158,15 +176,15 @@ def main(config):
             sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", "CRVAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "CRVAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
     if 'TimeVAE' in config['methods']:
         x_all = []
-        for dat in data_timeVAE:
-            for i in range(T - 30 + 1):
-                x = dat[i:i+30]
+        for dat in data_timevae:
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
                 x = x[triu_indices[0], triu_indices[1]]
                 x_all.append(x)
@@ -184,15 +202,15 @@ def main(config):
             sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", "TimeVAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "TimeVAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
     if 'TimeGAN' in config['methods']:
         x_all = []
-        for dat in data_timeGAN:
-            for i in range(T - 30 + 1):
-                x = dat[i:i+30]
+        for dat in data_timegan:
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
                 x = x[triu_indices[0], triu_indices[1]]
                 x_all.append(x)
@@ -210,15 +228,15 @@ def main(config):
             sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", "TimeGAN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "TimeGAN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
             
-    if 'Diffusion-TS' in config['methods']:
+    if 'T2IDIFF' in config['methods']:
         x_all = []
-        for dat in data_diffusionTS:
-            for i in range(T - 30 + 1):
-                x = dat[i:i+30]
+        for dat in data_t2idiff:
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
                 x = x[triu_indices[0], triu_indices[1]]
                 x_all.append(x)
@@ -236,15 +254,41 @@ def main(config):
             sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", "Diffusion-TS_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "T2IDIFF_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            plt.show()
+            
+    if 'DSFM' in config['methods']:
+        x_all = []
+        for dat in data_dsfm:
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
+                x = np.corrcoef(x.T)
+                x = x[triu_indices[0], triu_indices[1]]
+                x_all.append(x)
+        x = np.stack(x_all)
+        x = torch.from_numpy(x).float()
+        
+        cluster_ids, cluster_centers = kmeans(X=x, num_clusters=K, distance='euclidean', device=device)
+        
+        for i,centroid in enumerate(cluster_centers):
+            M = torch.zeros((R, R), dtype=x.dtype)
+            M[triu_indices[0], triu_indices[1]] = centroid
+            M[triu_indices[1], triu_indices[0]] = centroid   # symmetric
+            M.fill_diagonal_(1.0)   # if needed
+            plt.figure(figsize=(10, 8))
+            sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
+            plt.xticks([])
+            plt.yticks([])
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "DSFM_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
     if 'rDCM-GEN' in config['methods']:
         x_all = []
-        for dat in data_rdcm:
-            for i in range(T - 30 + 1):
-                x = dat[i:i+30]
+        for dat in data_rdcmgen:
+            for i in range(T - config['wind'] + 1):
+                x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
                 x = x[triu_indices[0], triu_indices[1]]
                 x_all.append(x)
@@ -262,8 +306,8 @@ def main(config):
             sns.heatmap(M.cpu().numpy(), cmap='coolwarm', center=0, square=True, vmin=-1, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            os.makedirs(os.path.join('plots', 'TVFC'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", "rDCM-GEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "rDCM-GEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
 
 
@@ -271,14 +315,31 @@ def main(config):
         
 if __name__ == '__main__':
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
-    config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new/augmented_rDCM-GEN.pt'
-    config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_CRVAE.pt'
-    config['path_augmented_timeVae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
-    config['path_augmented_timeGan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
-    config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
+    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
+    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
+    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
     config['atlas'] = 'SCH'
-    config['device'] = "cuda:1"
-    config['methods'] = ['HCP', 'rDCM-GEN', 'CRVAE', 'Noise-3dB', 'Noise-6dB', 'TimeVAE', 'TimeGAN', 'Diffusion-TS']
+    config['TR'] = 0.72
+    config['newTR'] = 2.0
+    config['device'] = "cuda:3"
+    config['case'] = "full_subsampled"
+    if config['case'] == "full_original" or config['case'] == "half_original":
+        config['wind'] = 62
+    elif config['case'] == "full_subsampled" or config['case'] == "half_subsampled":
+        config['wind'] = 22
+    if config['case'] == "full_original":
+        config['subjects'] = 100
+    elif config['case'] == "half_original":
+        config['subjects'] = 140
+    elif config['case'] == "full_subsampled":
+        config['subjects'] = 100
+    elif config['case'] == "half_subsampled":
+        config['subjects'] = 145
+    config['methods'] = ['HCP', 'rDCM-GEN', 'CRVAE', 'TimeVAE', 'TimeGAN', 'T2IDIFF', 'DSFM']
     results = main(config)   
     

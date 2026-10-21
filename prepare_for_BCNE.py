@@ -2,59 +2,98 @@ import torch
 import os
 import numpy as np
 import pandas as pd
+from scipy.signal import butter, filtfilt, resample
+
+
+
+def preprocess_HCP(data, cat):
+    for i, y in enumerate(data):
+        if cat == "full_original":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+        elif cat == "half_original":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+        elif cat == "full_subsampled":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+        elif cat == "half_subsampled":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+        data[i] = y
+    return data
+
 
 
 def main(config):
-    data = np.load(os.path.join(config['path_data'],'train_data_HCP_SCH_resampled.npz'))
+    data = np.load(os.path.join(config['path_data'],'train_data_HCP_SCH.npz'))
     train_data = []
     for key in data:
-        train_data.append(data[key])
+        temp = data[key][183:-184]
+        train_data.append(temp[:400])
     
-    data_rDCM = torch.load(os.path.join(config['path_rdcm'])).detach().cpu().numpy()[0:3][:,5,:,:]
-    data_timeVAE = np.load(config['path_timeVae'])['data'][50:53]
+    data_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
+    data_rDCM = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    data_timeVAE = np.load(os.path.join(config['path_augmented_timevae'], config['case'], 'timeVAE_HCP_2026_' + config['case'] + '_prior_samples.npz'))['data']
+    data_timeGAN = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
+    data_t2idiff = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
+    data_dsfm = np.load(os.path.join(config['path_augmented_dsfm'], config['case'], 'samples', 'samples.npy'))
+    
+    data_rDCM = data_rDCM.numpy()[0:3][:,5,:400,:]
+    data_rDCM = (data_rDCM - np.mean(data_rDCM, axis=1, keepdims=True))/np.std(data_rDCM, axis=1, keepdims=True)
+    data_timeVAE = data_timeVAE[50:53,:400,:]
     data_timeVAE = (data_timeVAE - np.mean(data_timeVAE, axis=1, keepdims=True))/np.std(data_timeVAE, axis=1, keepdims=True)
-    data_timeGAN = np.load(config['path_timeGan'])[50:53]
+    data_timeGAN = data_timeGAN[50:53,:400,:]
     data_timeGAN = (data_timeGAN - np.mean(data_timeGAN, axis=1, keepdims=True))/np.std(data_timeGAN, axis=1, keepdims=True)
-    data_diffusionTS = np.load(config['path_diffusion_ts'])[50:53]
-    data_diffusionTS = (data_diffusionTS - np.mean(data_diffusionTS, axis=1, keepdims=True))/np.std(data_diffusionTS, axis=1, keepdims=True)
-    data_crvae = torch.load(config['path_crvae']).cpu().numpy()[0:3][:,5,:,:]
+    data_t2idiff = data_t2idiff[0:3,:400,:]
+    data_t2idiff = (data_t2idiff - np.mean(data_t2idiff, axis=1, keepdims=True))/np.std(data_t2idiff, axis=1, keepdims=True)
+    data_crvae = data_crvae.numpy()[0:3][:,5,:400,:]
     data_crvae = (data_crvae - np.mean(data_crvae, axis=1, keepdims=True))/np.std(data_crvae, axis=1, keepdims=True)
+    data_dsfm = data_dsfm[0:3,:400,:]
+    data_dsfm = (data_dsfm - np.mean(data_dsfm, axis=1, keepdims=True))/np.std(data_dsfm, axis=1, keepdims=True)
     data_orig = train_data[0:3]
-    for i, data in enumerate(data_orig):
-        data = data[88:-88]
-        data_orig[i] = (data - np.mean(data, axis=0, keepdims=True))/np.std(data, axis=0, keepdims=True)
+    
+    data_orig = preprocess_HCP(data_orig, config['case'])
+        
     data_orig = np.concatenate(data_orig, axis=0)
-    data_noise05 = data_orig + np.random.randn(*data_orig.shape)*0.5
-    data_noise075 = data_orig + np.random.randn(*data_orig.shape)*0.75
     data_rDCM = np.reshape(data_rDCM, (data_rDCM.shape[0]*data_rDCM.shape[1], data_rDCM.shape[2]))
     data_crvae = np.reshape(data_crvae, (data_crvae.shape[0]*data_crvae.shape[1], data_crvae.shape[2]))
     data_timeVAE = np.reshape(data_timeVAE, (data_timeVAE.shape[0]*data_timeVAE.shape[1], data_timeVAE.shape[2]))
     data_timeGAN = np.reshape(data_timeGAN, (data_timeGAN.shape[0]*data_timeGAN.shape[1], data_timeGAN.shape[2]))
-    data_diffusionTS = np.reshape(data_diffusionTS, (data_diffusionTS.shape[0]*data_diffusionTS.shape[1], data_diffusionTS.shape[2]))
-            
-    result = np.concatenate((data_orig, data_noise05), axis=0)
-    labels = [0 for i in range(1200)] + [1 for i in range(1200)]
-    labels = np.array(labels)
-    labels = pd.DataFrame(labels)
-    labels.to_csv(os.path.join(config['path_save'], 'Noise-6dB_labels.csv'))
-    os.makedirs(os.path.join(config['path_save'], 'Noise-6dB'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'Noise-6dB', 'sub-04_Noise-6dB_samples.npy'), result)
-    
-    result = np.concatenate((data_orig, data_noise075), axis=0)
-    labels = [0 for i in range(1200)] + [1 for i in range(1200)]
-    labels = np.array(labels)
-    labels = pd.DataFrame(labels)
-    labels.to_csv(os.path.join(config['path_save'], 'Noise-3dB_labels.csv'))
-    os.makedirs(os.path.join(config['path_save'], 'Noise-3dB'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'Noise-3dB', 'sub-04_Noise-3dB_samples.npy'), result)
-    
+    data_t2idiff = np.reshape(data_t2idiff, (data_t2idiff.shape[0]*data_t2idiff.shape[1], data_t2idiff.shape[2]))
+    data_dsfm = np.reshape(data_dsfm, (data_dsfm.shape[0]*data_dsfm.shape[1], data_dsfm.shape[2]))
+               
     result = np.concatenate((data_orig, data_timeVAE), axis=0)
     labels = [0 for i in range(1200)] + [1 for i in range(1200)]
     labels = np.array(labels)
     labels = pd.DataFrame(labels)
     labels.to_csv(os.path.join(config['path_save'], 'TimeVAE_labels.csv'))
     os.makedirs(os.path.join(config['path_save'], 'TimeVAE'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'TimeVAE', 'sub-04_TimeVAE_samples.npy'), result)
+    np.save(os.path.join(config['path_save'], 'TimeVAE', 'sub-01_TimeVAE_samples.npy'), result)
     
     result = np.concatenate((data_orig, data_timeGAN), axis=0)
     labels = [0 for i in range(1200)] + [1 for i in range(1200)]
@@ -62,15 +101,23 @@ def main(config):
     labels = pd.DataFrame(labels)
     labels.to_csv(os.path.join(config['path_save'], 'TimeGAN_labels.csv'))
     os.makedirs(os.path.join(config['path_save'], 'TimeGAN'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'TimeGAN', 'sub-04_TimeGAN_samples.npy'), result)
+    np.save(os.path.join(config['path_save'], 'TimeGAN', 'sub-01_TimeGAN_samples.npy'), result)
     
-    result = np.concatenate((data_orig, data_diffusionTS), axis=0)
+    result = np.concatenate((data_orig, data_t2idiff), axis=0)
     labels = [0 for i in range(1200)] + [1 for i in range(1200)]
     labels = np.array(labels)
     labels = pd.DataFrame(labels)
-    labels.to_csv(os.path.join(config['path_save'], 'Diffusion-TS_labels.csv'))
-    os.makedirs(os.path.join(config['path_save'], 'Diffusion-TS'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'Diffusion-TS', 'sub-04_Diffusion-TS_samples.npy'), result)
+    labels.to_csv(os.path.join(config['path_save'], 'T2IDIFF_labels.csv'))
+    os.makedirs(os.path.join(config['path_save'], 'T2IDIFF'), exist_ok=True)
+    np.save(os.path.join(config['path_save'], 'T2IDIFF', 'sub-01_T2IDIFF_samples.npy'), result)
+    
+    result = np.concatenate((data_orig, data_dsfm), axis=0)
+    labels = [0 for i in range(1200)] + [1 for i in range(1200)]
+    labels = np.array(labels)
+    labels = pd.DataFrame(labels)
+    labels.to_csv(os.path.join(config['path_save'], 'DSFM_labels.csv'))
+    os.makedirs(os.path.join(config['path_save'], 'DSFM'), exist_ok=True)
+    np.save(os.path.join(config['path_save'], 'DSFM', 'sub-01_DSFM_samples.npy'), result)
     
     result = np.concatenate((data_orig, data_crvae), axis=0)
     labels = [0 for i in range(1200)] + [1 for i in range(1200)]
@@ -78,7 +125,7 @@ def main(config):
     labels = pd.DataFrame(labels)
     labels.to_csv(os.path.join(config['path_save'], 'CRVAE_labels.csv'))
     os.makedirs(os.path.join(config['path_save'], 'CRVAE'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'CRVAE', 'sub-04_CRVAE_samples.npy'), result)
+    np.save(os.path.join(config['path_save'], 'CRVAE', 'sub-01_CRVAE_samples.npy'), result)
     
     result = np.concatenate((data_orig, data_rDCM), axis=0)
     labels = [0 for i in range(1200)] + [1 for i in range(1200)]
@@ -86,26 +133,30 @@ def main(config):
     labels = pd.DataFrame(labels)
     labels.to_csv(os.path.join(config['path_save'], 'rDCM-GEN_labels.csv'))
     os.makedirs(os.path.join(config['path_save'], 'rDCM-GEN'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'rDCM-GEN', 'sub-04_rDCM-GEN_samples.npy'), result)
+    np.save(os.path.join(config['path_save'], 'rDCM-GEN', 'sub-01_rDCM-GEN_samples.npy'), result)
     
     
-    result = np.concatenate((data_orig[:300], data_noise05[:300], data_noise075[:300],  data_timeVAE[:300], data_timeGAN[:300], data_diffusionTS[:300], data_crvae[:300], data_rDCM[:300]), axis=0)
-    labels = [0 for i in range(300)] + [1 for i in range(300)] + [2 for i in range(300)] + [3 for i in range(300)] + [4 for i in range(300)] + [5 for i in range(300)] + [6 for i in range(300)] + [7 for i in range(300)]
+    result = np.concatenate((data_orig[:300],  data_timeVAE[:300], data_timeGAN[:300], data_t2idiff[:300], data_dsfm[:300], data_crvae[:300], data_rDCM[:300]), axis=0)
+    labels = [0 for i in range(300)] + [1 for i in range(300)] + [2 for i in range(300)] + [3 for i in range(300)] + [4 for i in range(300)] + [5 for i in range(300)] + [6 for i in range(300)]
     labels = np.array(labels)
     labels = pd.DataFrame(labels)
     labels.to_csv(os.path.join(config['path_save'], 'comparison_labels.csv'))
     os.makedirs(os.path.join(config['path_save'], 'comparison'), exist_ok=True)
-    np.save(os.path.join(config['path_save'], 'comparison', 'sub-04_comparison_samples.npy'), result)
+    np.save(os.path.join(config['path_save'], 'comparison', 'sub-01_comparison_samples.npy'), result)
     
 if __name__ == "__main__":
     config = {}
-    config['path_rdcm'] = r'/media/student1/Extreme Pro/augmented_new/augmented_rDCM-GEN.pt'
-    config['path_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_CRVAE.pt'
-    config['path_timeGan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
-    config['path_timeVae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
-    config['path_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
+    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
+    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/BCNE/data'
+    config['case'] = "full_original"
+    config['TR'] = 0.72
+    config['newTR'] = 2.0
     main(config)
 
 

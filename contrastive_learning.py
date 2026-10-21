@@ -9,6 +9,51 @@ from utils import InfoNCE, MaskedInstanceNorm1d, DualBranchContrast, BatchSample
 import copy
 import os
 import pickle
+from scipy.signal import butter, filtfilt, resample
+
+
+
+def preprocess_HCP(data, cat):
+    for i, y in enumerate(data):
+        if cat == "full_original":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+        elif cat == "half_original":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+        elif cat == "full_subsampled":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+        elif cat == "half_subsampled":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+        data[i] = y
+    return data
+
 
 class Transformer(nn.Module):
     def __init__(
@@ -175,48 +220,104 @@ def main(config):
     with open(os.path.join(path,'names_train.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names.append(temp[:-4])
+            names.append(temp)
             
-    data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '_resampled.npz'))
+    data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '.npz'))
     train_data = []
-    for key in data:
-        temp = data[key][88:-88]
-        train_data.append(temp)
+    names_train = []
+    for (key,name) in zip(data,names):
+        if data[key].shape[0] == 1200:
+            temp = data[key][183:-184]
+            train_data.append(temp)
+            names_train.append(name)
     
-    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '_1_resampled.npz'))
+    
+    names = []
+    with open(os.path.join(path,'names_val.txt'), 'r') as f:
+        for line in f:
+            temp = line.strip()
+            names.append(temp)
+    
+    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '.npz'))
     val_data1 = []
-    for key in data:
-        val_data1.append(data[key])
+    names_temp = []
+    for (key, name) in zip(data, names):
+        if 'LR' in name and 'REST1' in name and data[key].shape[0] == 1200:
+            temp = data[key][183:-184]
+            val_data1.append(temp)
+            names_temp.append(name[:6])
     
-    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '_2_resampled.npz'))
+    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '.npz'))
     val_data2 = []
-    for key in data:
-        val_data2.append(data[key])
-        
-    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '_1_resampled.npz'))
-    test_data1 = []
-    for key in data:
-        test_data1.append(data[key])
+    names_val = []
+    for (key, name) in zip(data, names):
+        if 'LR' in name and 'REST2' in name and name[:6] in names_temp and data[key].shape[0] == 1200:
+            temp = data[key][183:-184]
+            val_data2.append(temp)
+            names_val.append(name[:6])
+            
+    remove = []
+    for (i,name) in enumerate(names_temp):
+        if name not in names_val:
+            remove.append(i)
+    remove = remove[::-1]
     
-    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '_2_resampled.npz'))
+    for index in remove:
+        val_data1.pop(index)
+            
+    names = []
+    with open(os.path.join(path,'names_test.txt'), 'r') as f:
+        for line in f:
+            temp = line.strip()
+            names.append(temp)
+        
+    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '.npz'))
+    test_data1 = []
+    names_temp = []
+    for (key, name) in zip(data, names):
+        if 'LR' in name and 'REST1' in name and data[key].shape[0] == 1200:
+            temp = data[key][183:-184]
+            test_data1.append(temp)
+            names_temp.append(name[:6])
+    
+    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '.npz'))
     test_data2 = []
-    for key in data:
-        test_data2.append(data[key])
+    names_test = []
+    for (key, name) in zip(data, names):
+        if 'LR' in name and 'REST2' in name and name[:6] in names_temp and data[key].shape[0] == 1200:
+            temp = data[key][183:-184]
+            test_data2.append(temp)
+            names_test.append(name[:6])
+    
+    remove = []
+    for (i,name) in enumerate(names_temp):
+        if name not in names_test:
+            remove.append(i)
+    remove = remove[::-1]
+    
+    for index in remove:
+        test_data1.pop(index)
+            
+    train_data = preprocess_HCP(train_data, config['case'])
+    val_data1 = preprocess_HCP(val_data1, config['case'])
+    val_data2 = preprocess_HCP(val_data2, config['case'])
+    test_data1 = preprocess_HCP(test_data1, config['case'])
+    test_data2 = preprocess_HCP(test_data2, config['case'])
         
     names_rdcm = []
-    with open(os.path.join(config['path_augmented_rdcm'],'names_rDCM-GEN.txt'), 'r') as f:
+    with open(os.path.join(config['path_augmented_rdcm'],'names_rDCM-GEN_' + config['case'] + '.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names_rdcm.append(temp[:-4])
+            names_rdcm.append(temp)
             
     names_crvae = []
-    with open(os.path.join(config['path_augmented_crvae'],'names_CRVAE.txt'), 'r') as f:
+    with open(os.path.join(config['path_augmented_crvae'],'names_CR-VAE_' + config['case'] + '.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names_crvae.append(temp[:-4])
+            names_crvae.append(temp)
             
-    augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN.pt'))
-    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CRVAE.pt'))
+    augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
 
 
     T,R = test_data1[0].shape
@@ -231,19 +332,19 @@ def main(config):
     save_models = config['save_models']
     
     for i,data in enumerate(val_data1):
-        data = torch.from_numpy(data.astype(np.float32))[88:-88].unsqueeze(0)
+        data = torch.from_numpy(data.astype(np.float32)).unsqueeze(0)
         val_data1[i] = data
         
     for i,data in enumerate(val_data2):
-        data = torch.from_numpy(data.astype(np.float32))[88:-88].unsqueeze(0)
+        data = torch.from_numpy(data.astype(np.float32)).unsqueeze(0)
         val_data2[i] = data
         
     for i,data in enumerate(test_data1):
-        data = torch.from_numpy(data.astype(np.float32))[88:-88].unsqueeze(0)
+        data = torch.from_numpy(data.astype(np.float32)).unsqueeze(0)
         test_data1[i] = data
         
     for i,data in enumerate(test_data2):
-        data = torch.from_numpy(data.astype(np.float32))[88:-88].unsqueeze(0)
+        data = torch.from_numpy(data.astype(np.float32)).unsqueeze(0)
         test_data2[i] = data
     
     for tau in config['taus']:
@@ -253,7 +354,7 @@ def main(config):
             elif method == 'CRVAE':
                 batch_sampler = BatchSampler(names_crvae.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
             else:
-                batch_sampler = BatchSampler(names.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
+                batch_sampler = BatchSampler(names_train.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
             train_loader = DataLoader(train_data, batch_sampler=batch_sampler) 
 
             model = Transformer(R,
@@ -291,18 +392,6 @@ def main(config):
                             batch_data1 = batch_data_crvae[torch.arange(len(sample_inds)), idx]
                             idx = torch.randint(8, 15, (len(sample_inds),))
                             batch_data2 = batch_data_crvae[torch.arange(len(sample_inds)), idx]
-                            batch_data = [batch_data1.to(device), batch_data2.to(device)]
-                        else:
-                            if '6dB' in method:
-                                std = 0.5
-                            elif '3dB' in method:
-                                std = 0.75
-                            batch_list = [train_data[i] for i in sample_inds]
-                            batch_loader = DataLoader(batch_list, batch_size=len(batch_list))
-                            batch_data = next(iter(batch_loader))
-                            data_std = batch_data.std(dim=1, keepdim=True)
-                            batch_data1 = batch_data + torch.randn_like(batch_data)*std*data_std
-                            batch_data2 = batch_data + torch.randn_like(batch_data)*std*data_std
                             batch_data = [batch_data1.to(device), batch_data2.to(device)]
                         loss = train(batch_data,model,contrast_model,optimizer)
                         total_loss += loss
@@ -349,29 +438,32 @@ def main(config):
             results['val_results_all'] = res_all
             
             if save_models:
-                if not os.path.exists(os.path.join(config['path_save'],'models','SimCLR2')):
-                    os.makedirs(os.path.join(config['path_save'],'models','SimCLR2'),exist_ok=True)   
-                torch.save(max_val_acc_model, os.path.join(config['path_save'],'models','SimCLR2','model_' + method + '_tau' + str(tau) + '.pth'))
+                if not os.path.exists(os.path.join(config['path_save'],'models','SimCLR', config['case'])):
+                    os.makedirs(os.path.join(config['path_save'],'models','SimCLR', config['case']),exist_ok=True)   
+                torch.save(max_val_acc_model, os.path.join(config['path_save'],'models','SimCLR', config['case'],'model_' + method + '_tau' + str(tau) + '.pth'))
             
             if save_results:
-                if not os.path.exists(os.path.join(config['path_save'],'SimCLR2')):
-                    os.makedirs(os.path.join(config['path_save'],'SimCLR2'),exist_ok=True)   
-                with open(os.path.join(config['path_save'],'SimCLR2','results_' + method + '_tau' + str(tau) + '.pkl'), 'wb') as f:
+                if not os.path.exists(os.path.join(config['path_save'],'SimCLR', config['case'])):
+                    os.makedirs(os.path.join(config['path_save'],'SimCLR', config['case']),exist_ok=True)   
+                with open(os.path.join(config['path_save'],'SimCLR', config['case'],'results_' + method + '_tau' + str(tau) + '.pkl'), 'wb') as f:
                     pickle.dump(results,f)
 
 
 if __name__ == '__main__':
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
-    config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new'
-    config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models'
-    config['methods'] = ['CRVAE','Noise-6dB', 'Noise-3dB','rDCM-GEN']  
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
+    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
+    config['path_augmented_rdcm'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['methods'] = ['CRVAE','rDCM-GEN']  
     config['atlas'] = 'SCH'
+    config['case'] = "full_subsampled"
+    config['TR'] = 0.72
+    config['newTR'] = 2.0
     config['batch_size'] = 128
     config['shuffle'] = True
     config['epochs'] = 200
-    config['taus'] = [0.1, 0.15]
+    config['taus'] = [0.05, 0.1, 0.15]
     config['lr'] = 1e-4
     config['warm_up_epochs'] = 10
     config['eval_epochs'] = list(range(1,config['epochs']+1))
@@ -381,7 +473,7 @@ if __name__ == '__main__':
     config['model_config']['dim_feedforward'] = 1024
     config['model_config']['out_dim'] = 4096
     config['model_config']['D'] = 512
-    config['device'] = "cuda:3"
+    config['device'] = "cuda:0"
     config['save_results'] = True
     config['save_models'] = True
     main(config)
