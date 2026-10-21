@@ -7,11 +7,11 @@ from tqdm import tqdm
 import os
 import pickle
 import argparse
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, resample
 import matplotlib.pyplot as plt
 
 def main(config):
-    TR = 0.72
+    TR = config['TR']
     device = torch.device(config['device']) if torch.cuda.is_available() else torch.device("cpu")
     names_train = []
     with open(os.path.join(config['data_path'],'names_train.txt'), 'r') as f:
@@ -25,43 +25,66 @@ def main(config):
     
     train_data = train_data[config['start']:config['finish']]
     names_train = names_train[config['start']:config['finish']]
+
+
+    
     for i, (y,name) in enumerate(zip(train_data,names_train)):
-        if not os.path.exists(os.path.join(config['save_path'], 'neural_noise', name + '.pkl')):
-            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
-            order = 4
-            cutoff = 0.1
-            fs = 1/TR
-            b, a = butter(order, cutoff, btype='low', fs=fs)
-            y = filtfilt(b, a, y.T).T.astype('float32')
+        if not os.path.exists(os.path.join(config['save_path'], 'neural_noise', config['case'], name + '.pkl')):
+            if config['case'] == "full_original":
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                newTR = TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+            elif config['case'] == "half_original":
+                y = y[125:708]
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                newTR = TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+            elif config['case'] == "full_subsampled":
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+                newTR = 2
+                rate = newTR/TR
+                new_samples = int(np.round(y.shape[0] / rate))
+                y = resample(y, new_samples)
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            elif config['case'] == "half_subsampled":
+                y = y[125:708]
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+                newTR = 2
+                rate = newTR/TR
+                new_samples = int(np.round(y.shape[0] / rate))
+                y = resample(y, new_samples)
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            
             R = y.shape[-1]
             Y = {
                  'y': y,
-                 'dt': TR
+                 'dt': newTR
                  }
-            corr = np.corrcoef(y.T)
             
-            thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-            outs = []
-            for thr in thresholds:
-                DCM = tapas_rdcm_model_specification(Y)
-                mask = np.abs(corr) >= thr
-                DCM['a'][~mask] = 0
-                with torch.no_grad():
-                    out = tapas_rdcm_estimate(DCM, 'r', None, 1)
-                outs.append(out)
-            
-            # Extract logF values
-            logFs = [out[0]['logF'] for out in outs]
-            
-            # Find index of maximum logF
-            best_idx = np.argmax(logFs)
-            
-            # Select best output
-            out = outs[best_idx]
-            threshold = thresholds[best_idx]
-            mask = np.abs(corr) >= threshold
+            DCM = tapas_rdcm_model_specification(Y)
+
+            with torch.no_grad():
+                out = tapas_rdcm_estimate(DCM, 'r', None, 1)
     
-            epochs = 100
+            epochs = config['epochs']
             flag = True
             rep = 0
             neural_noises = []
@@ -72,12 +95,13 @@ def main(config):
             losses_all = []
             lr = 7.5e-4
             A_var = [1e-4, 5e-5, 1e-5, 1e-5, 1e-6]
+            #A_var = [5e-5, 1e-5, 1e-5, 1e-5, 1e-6]
             flag_stop = False
             while flag and rep < len(A_var):
                 if rep == 0:
-                    model = GenerativeModel(y=y, TR=TR, mask=mask).to(device)
+                    model = GenerativeModel(y=y, TR=newTR).to(device)
                 else:
-                    model = GenerativeModel(y=y, TR=TR, mask=mask, 
+                    model = GenerativeModel(y=y, TR=newTR, 
                                             neural_init=neural_noise, 
                                             beta_init=beta).to(device)
                 
@@ -101,11 +125,11 @@ def main(config):
                         losses.append(loss.item())
                         pbar.set_postfix({'loss': loss.item()})
                         pbar.update()
-                plt.figure()
-                plt.plot(y[:,0])
-                plt.plot(y_hat[:,0].detach().cpu())
+                #plt.figure()
+                #plt.plot(y[:,0])
+                #plt.plot(y_hat[:,0].detach().cpu())
                 
-                if flag_stop:
+                if flag_stop or np.std(losses) > 20:
                     break
                 neural_noise = model.neural_noise.detach().cpu()
                 neural_pink = model.neural_pink.detach().cpu()
@@ -120,28 +144,28 @@ def main(config):
                         'c': np.eye(R)
                         }
                 DCM = tapas_rdcm_model_specification(Y, U, args)
-                DCM['a'][~mask] = 0
                 with torch.no_grad():
                     if rep == 0:
                         new_out = tapas_rdcm_estimate(DCM ,'r', None, 1, True, [out[0]['Ep']['A'], A_var[rep]])
                     else:
                         new_out = tapas_rdcm_estimate(DCM ,'r', None, 1, True, [outputs[-1][0]['Ep']['A'], A_var[rep]])
-                if rep == 0:
+                if rep == 0 and losses[-1] < losses[0]:
                     outputs.append(new_out)
                     neural_noises.append(neural_noise)
                     pink_neural_noises.append(neural_pink)
                     betas.append(beta)
                     NFE.append(new_out[0]['logF'])
+                elif rep == 0 and losses[-1] >= losses[0]:
+                    flag = False
                 if rep >= 1:
-                    if new_out[0]['logF'] > outputs[-1][0]['logF']:
+                    if new_out[0]['logF'] > outputs[-1][0]['logF'] and losses_all[-1][-1] < losses_all[-2][-1]:
                         outputs.append(new_out)
                         neural_noises.append(neural_noise)
                         pink_neural_noises.append(neural_pink)
                         betas.append(beta)
                         NFE.append(new_out[0]['logF'])
-                    else:
+                    elif new_out[0]['logF'] < outputs[-1][0]['logF'] and losses_all[-1][-1] < losses_all[-2][-1]:
                         DCM = tapas_rdcm_model_specification(Y, U, args)
-                        DCM['a'][~mask] = 0
                         temp = tapas_rdcm_estimate(DCM ,'r', None, 1, True, [outputs[-1][0]['Ep']['A'], 1e-16])
                         if temp[0]['logF'] > outputs[-1][0]['logF']:
                             neural_noises.append(neural_noise)
@@ -150,6 +174,8 @@ def main(config):
                             NFE.append(temp[0]['logF'])
                         else:
                             flag = False
+                    else:
+                        flag = False
                 rep += 1
             result = {}
             result['outputs'] = outputs
@@ -158,9 +184,9 @@ def main(config):
             result['betas'] = betas
             result['NFE'] = NFE
             result['losses_all'] = losses_all
-            if not os.path.exists(os.path.join(config['save_path'], 'neural_noise')):
-                os.makedirs(os.path.join(config['save_path'], 'neural_noise'), exist_ok=True)
-            with open(os.path.join(config['save_path'], 'neural_noise', name + '.pkl'), 'wb') as f:
+            if not os.path.exists(os.path.join(config['save_path'], 'neural_noise', config['case'])):
+                os.makedirs(os.path.join(config['save_path'], 'neural_noise', config['case']), exist_ok=True)
+            with open(os.path.join(config['save_path'], 'neural_noise', config['case'], name + '.pkl'), 'wb') as f:
                 pickle.dump(result, f)
             del DCM
             print('--------------SUBJECT ' + str(i) + '--------------')
@@ -173,7 +199,10 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', type=str, 
                         default=r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results')
     parser.add_argument('--start', type=int, default=0)
-    parser.add_argument('--finish', type=int, default=100)
+    parser.add_argument('--finish', type=int, default=2000)
+    parser.add_argument('--TR', type=float, default=0.72)
+    parser.add_argument('--epochs', type=float, default=100)
+    parser.add_argument('--case', type=str, default="full_subsampled")
     parser.add_argument('--device', type=str, default='cuda:0')
     args = parser.parse_args()
     config = {
@@ -181,6 +210,9 @@ if __name__ == '__main__':
         'save_path': args.save_path,
         'start': args.start,
         'finish': args.finish,
+        'TR': args.TR,
+        'epochs': args.epochs,
+        'case': args.case,
         'device': args.device
         }
     main(config)

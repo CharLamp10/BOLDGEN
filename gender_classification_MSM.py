@@ -8,6 +8,51 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from scipy.signal import butter, filtfilt, resample
+
+
+def preprocess_HCP(data, cat):
+    for i, y in enumerate(data):
+        if cat == "full_original":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).astype('float32')
+        elif cat == "half_original":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).astype('float32')
+        elif cat == "full_subsampled":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            y = y.T
+        elif cat == "half_subsampled":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            y = y.T
+        data[i] = y
+    return data
 
 
 class PositionalEncoding(nn.Module):
@@ -180,43 +225,51 @@ def main(config):
             g = 0
         gender_test.append(g)
     
-    data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '_resampled.npz'))
+    data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '.npz'))
     train_data = []
-    for key in data:
-        temp = data[key][88:-88]
-        temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-        train_data.append(temp.T)
+    pos_train = []
+    for i,key in enumerate(data):
+        if data[key].shape[0] != 1200 or np.all(data[key] == 0):
+            pos_train.append(i)
+        train_data.append(data[key][183:-184])
     
-    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '_1_resampled.npz'))
-    val_data1 = []
-    for key in data:
-        temp = data[key][88:-88]
-        temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-        val_data1.append(temp.T)
-    
-    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '_2_resampled.npz'))
-    val_data2 = []
-    for key in data:
-        temp = data[key][88:-88]
-        temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-        val_data2.append(temp.T)
+    data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '.npz'))
+    val_data = []
+    pos_val = []
+    for i,key in enumerate(data):
+        if data[key].shape[0] != 1200 or np.all(data[key] == 0):
+            pos_val.append(i)
+        val_data.append(data[key][183:-184])
         
-    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '_1_resampled.npz'))
-    test_data1 = []
-    for key in data:
-        temp = data[key][88:-88]
-        temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-        test_data1.append(temp.T)
+    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '.npz'))
+    test_data = []
+    pos_test = []
+    for i,key in enumerate(data):
+        if data[key].shape[0] != 1200 or np.all(data[key] == 0):
+            pos_test.append(i)
+        test_data.append(data[key][183:-184])
+     
+    pos_train = pos_train[::-1]
+    pos_val = pos_val[::-1]
+    pos_test = pos_test[::-1]
     
-    data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '_2_resampled.npz'))
-    test_data2 = []
-    for key in data:
-        temp = data[key][88:-88]
-        temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-        test_data2.append(temp.T)
+    for p in pos_train:
+        gender_train.pop(p)
+        train_data.pop(p)
+        
+    for p in pos_val:
+        gender_val.pop(p)
+        val_data.pop(p)
+        
+    for p in pos_test:
+        gender_test.pop(p)
+        test_data.pop(p)
     
-
-    T,R = test_data1[0].shape
+    train_data = preprocess_HCP(train_data, config['case'])
+    val_data = preprocess_HCP(val_data, config['case'])
+    test_data = preprocess_HCP(test_data, config['case'])
+    
+    T,R = test_data[0].shape
     
     device = torch.device(config['device']) if torch.cuda.is_available() else torch.device("cpu")
     batch_size = config['batch_size']
@@ -236,7 +289,7 @@ def main(config):
                                          max_timepoints=config['T']).to(device)
             encoder_model.load_state_dict(state_dict, strict=False)
         
-            res,_ = test(encoder_model, train_data, val_data1+val_data2, test_data1+test_data2, gender_train, gender_val+gender_val, gender_test+gender_test, batch_size, device)
+            res,_ = test(encoder_model, train_data, val_data, test_data, gender_train, gender_val, gender_test, batch_size, device)
             result.append(res)
         results = {}
         results['result'] = result
@@ -250,11 +303,15 @@ def main(config):
 
 if __name__ == '__main__':
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
-    config['methods'] = ['Noise-6dB','Noise-3dB', 'CRVAE', 'TimeVAE', 'TimeGAN','Diffusion-TS','rDCM-GEN']
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
+    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
+    config['methods'] = ['CRVAE', 'TimeVAE', 'TimeGAN','T2IDIFF', 'DSFM','rDCM-GEN']
     config['atlas'] = 'SCH' #AICHA, AAL
-    config['T'] = 400
+    config['case'] = "full_original"
+    config['TR'] = 0.72
+    config['newTR'] = 2.0
+    if config['case'] == "full_original":
+        config['T'] = 833
     config['R'] = 100
     config['batch_size'] = 128
     config['shuffle'] = True
@@ -262,6 +319,6 @@ if __name__ == '__main__':
     config['model_config']['n_enc_layers'] = 5
     config['model_config']['nheads'] = 4
     config['model_config']['dropout'] = 0.1
-    config['device'] = "cuda:3"
+    config['device'] = "cuda:1"
     config['save_results'] = True
     main(config)

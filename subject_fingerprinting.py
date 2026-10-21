@@ -34,34 +34,34 @@ def main(config):
     with open(os.path.join(config['path_data'],'names_train.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names.append(temp[:-7])
+            names.append(temp)
             
-    data = np.load(os.path.join(config['path_data'],'train_data_HCP_SCH_resampled.npz'))
+    data = np.load(os.path.join(config['path_data'],'train_data_HCP_SCH.npz'))
     train_data = []
     for key in data:
-        train_data.append(data[key])
+        train_data.append(data[key][186:-187])
         
-    names_rdcm = []
-    with open(os.path.join(config['path_augmented_rdcm'],'names_rDCM-GEN.txt'), 'r') as f:
+    names_rdcmgen = []
+    with open(os.path.join(config['path_augmented_rdcm'],'names_rDCM-GEN_' + config['case'] + '.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names_rdcm.append(temp[:-3])
+            names_rdcmgen.append(temp)
             
     names_crvae = []
-    with open(os.path.join(config['path_augmented_crvae'],'names_CRVAE.txt'), 'r') as f:
+    with open(os.path.join(config['path_augmented_crvae'],'names_CR-VAE_' + config['case'] + '.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names_crvae.append(temp[:-3])
+            names_crvae.append(temp)
             
-    augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN.pt'))
-    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CRVAE.pt'))
+    augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
     
     names_SF = []
     for name in names:
-        if name in names_rdcm and name in names_crvae and 'rest1' in name:
+        if name in names_rdcmgen and name in names_crvae and 'REST1_LR' in name:
             name2 = name
-            name2 = name2.replace('rest1', 'rest2')
-            if name2 in names and name2 in names_rdcm and name2 in names_crvae:
+            name2 = name2.replace('REST1_LR', 'REST2_LR')
+            if name2 in names and name2 in names_rdcmgen and name2 in names_crvae:
                 names_SF.append(name[:6])
     
     names_SF = names_SF[:128]
@@ -79,21 +79,21 @@ def main(config):
     for name in names_SF:
         pos = np.where(np.array(ids) == name)[0]
         for p in pos:
-            if "rest1" in names[p]:
+            if "REST1_LR" in names[p]:
                 data1.append(train_data[p])
-            elif "rest2" in names[p]:
+            elif "REST2_LR" in names[p]:
                 data2.append(train_data[p])
                 
                 
-    ids = names_rdcm.copy()
+    ids = names_rdcmgen.copy()
     for i,idd in enumerate(ids):
         ids[i] = idd[:6]
     for name in names_SF:
         pos = np.where(np.array(ids) == name)[0]
         for p in pos:
-            if "rest1" in names_rdcm[p]:
+            if "REST1_LR" in names_rdcmgen[p]:
                 data1_rDCM.append(augmented_rdcm[p])
-            elif "rest2" in names_rdcm[p]:
+            elif "REST2_LR" in names_rdcmgen[p]:
                 data2_rDCM.append(augmented_rdcm[p])
                 
     ids = names_crvae.copy()
@@ -102,9 +102,9 @@ def main(config):
     for name in names_SF:
         pos = np.where(np.array(ids) == name)[0]
         for p in pos:
-            if "rest1" in names_crvae[p]:
+            if "REST1_LR" in names_crvae[p]:
                 data1_CRVAE.append(augmented_crvae[p])
-            elif "rest2" in names_crvae[p]:
+            elif "REST2_LR" in names_crvae[p]:
                 data2_CRVAE.append(augmented_crvae[p])
                 
     data1 = torch.from_numpy(np.stack(data1))
@@ -114,19 +114,13 @@ def main(config):
     
     accuracies = []
     accuracies_rdcm = []
-    accuracies_noise05 = []
-    accuracies_noise075 = []
     accuracies_crvae = []
     for j in range(15):
         data1_rDCM_j = torch.stack(data1_rDCM)[:,j,:,:]
         data2_rDCM_j = torch.stack(data2_rDCM)[:,j,:,:]
         data1_CRVAE_j = torch.stack(data1_CRVAE)[:,j,:,:]
         data2_CRVAE_j = torch.stack(data2_CRVAE)[:,j,:,:]
-        
-        data1_noise05_j = data1 + torch.randn_like(data1)*0.5
-        data1_noise075_j = data1 + torch.randn_like(data1)*0.75
-        data2_noise05_j = data2 + torch.randn_like(data2)*0.5
-        data2_noise075_j = data2 + torch.randn_like(data2)*0.75
+
         
         R = 100
         FC_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
@@ -135,31 +129,19 @@ def main(config):
         FC_rdcm_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
         FC_crvae_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
         FC_crvae_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
-        FC_noise05_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
-        FC_noise05_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
-        FC_noise075_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
-        FC_noise075_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
         triu_indices = torch.triu_indices(R, R, offset=1)
-        for i, (y1, y2, y1_rdcm, y2_rdcm, y1_crvae, y2_crvae, y1_noise05, y2_noise05, y1_noise075, y2_noise075) in enumerate(zip(data1, data2, data1_rDCM_j, data2_rDCM_j, data1_CRVAE_j, data2_CRVAE_j, data1_noise05_j, data2_noise05_j, data1_noise075_j, data2_noise075_j)):
-            FC1 = torch.corrcoef(y1[:200].T)
+        for i, (y1, y2, y1_rdcm, y2_rdcm, y1_crvae, y2_crvae) in enumerate(zip(data1, data2, data1_rDCM_j, data2_rDCM_j, data1_CRVAE_j, data2_CRVAE_j)):
+            FC1 = torch.corrcoef(y1.T)
             FC_test1[i] = FC1[triu_indices[0], triu_indices[1]]
-            FC2 = torch.corrcoef(y2[:200].T)
+            FC2 = torch.corrcoef(y2.T)
             FC_test2[i] = FC2[triu_indices[0], triu_indices[1]]
-            FC1_gen = torch.corrcoef(y1_rdcm[:200].T)
+            FC1_gen = torch.corrcoef(y1_rdcm.T)
             FC_rdcm_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
-            FC2_gen = torch.corrcoef(y2_rdcm[:200].T)
+            FC2_gen = torch.corrcoef(y2_rdcm.T)
             FC_rdcm_test2[i] = FC2_gen[triu_indices[0], triu_indices[1]]
-            FC1_gen = torch.corrcoef(y1_noise05[:200].T)
-            FC_noise05_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
-            FC2_gen = torch.corrcoef(y2_noise05[:200].T)
-            FC_noise05_test2[i] = FC2_gen[triu_indices[0], triu_indices[1]]
-            FC1_gen = torch.corrcoef(y1_noise075[:200].T)
-            FC_noise075_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
-            FC2_gen = torch.corrcoef(y2_noise075[:200].T)
-            FC_noise075_test2[i] = FC2_gen[triu_indices[0], triu_indices[1]]
-            FC1_gen = torch.corrcoef(y1_crvae[:200].T)
+            FC1_gen = torch.corrcoef(y1_crvae.T)
             FC_crvae_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
-            FC2_gen = torch.corrcoef(y2_crvae[:200].T)
+            FC2_gen = torch.corrcoef(y2_crvae.T)
             FC_crvae_test2[i] = FC2_gen[triu_indices[0], triu_indices[1]]
             
         accuracy = fingerprinting(FC_test1, FC_test2)
@@ -172,37 +154,26 @@ def main(config):
         accuracy_crvae_2 = fingerprinting(FC_crvae_test1, FC_test2)
         accuracy_crvae_both = (accuracy_crvae_1 + accuracy_crvae_2)/2
         
-        accuracy_noise05_1 = fingerprinting(FC_test1, FC_noise05_test2)
-        accuracy_noise05_2 = fingerprinting(FC_noise05_test1, FC_test2)
-        accuracy_noise05_both = (accuracy_noise05_1 + accuracy_noise05_2)/2
-        
-        accuracy_noise075_1 = fingerprinting(FC_test1, FC_noise075_test2)
-        accuracy_noise075_2 = fingerprinting(FC_noise075_test1, FC_test2)
-        accuracy_noise075_both = (accuracy_noise075_1 + accuracy_noise075_2)/2
-        
         accuracies.append(accuracy)
         accuracies_rdcm.append(accuracy_rdcm_both)
-        accuracies_noise05.append(accuracy_noise05_both)
-        accuracies_noise075.append(accuracy_noise075_both)
         accuracies_crvae.append(accuracy_crvae_both)
     
     result = {}
     result['orig'] = accuracies
     result['rDCM-GEN'] = accuracies_rdcm
     result['CRVAE'] = accuracies_crvae
-    result['Noise-6dB'] = accuracies_noise05
-    result['Noise-3dB'] = accuracies_noise075
     
-    os.makedirs(os.path.join(config['path_save'], 'SF'), exist_ok=True)
-    with open(os.path.join(config['path_save'], 'SF', 'results.pkl'), 'wb') as f:
+    os.makedirs(os.path.join(config['path_save'], 'SF', config['case']), exist_ok=True)
+    with open(os.path.join(config['path_save'], 'SF', config['case'], 'results.pkl'), 'wb') as f:
         pickle.dump(result, f)
     
     return result
     
 if __name__ == '__main__':
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
-    config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new'
-    config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models'
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
+    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
+    config['path_augmented_rdcm'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['case'] = "full_subsampled"
     result = main(config)

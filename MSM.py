@@ -28,6 +28,53 @@ from typing import Optional, Sequence, Union
 import os
 import copy
 import pickle
+from scipy.signal import butter, filtfilt, resample
+
+
+def preprocess_HCP(data, cat):
+    data_new = []
+    for i, y in enumerate(data):
+        if cat == "full_original":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).astype('float32')
+        elif cat == "half_original":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).astype('float32')
+        elif cat == "full_subsampled":
+            y_train = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y_train.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            y = y.T
+        elif cat == "half_subsampled":
+            y = (y[125:708] - np.mean(y[125:708], axis=0, keepdims=True))/np.std(y[125:708], axis=0, keepdims=True)
+            order = 4
+            cutoff = 0.1
+            fs = 1/config['TR']
+            b, a = butter(order, cutoff, btype='low', fs=fs)
+            y = filtfilt(b, a, y.T).T.astype('float32')
+            rate = config['newTR']/config['TR']
+            new_samples = int(np.round(y.shape[0] / rate))
+            y = resample(y, new_samples)
+            y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            y = y.T
+        if not np.any(np.isnan(y)) and not np.all(y == 0):
+            data_new.append(y)
+    return data_new
 
 
 class fMRIDataset(Dataset):
@@ -312,79 +359,68 @@ def main(config):
     idxs = np.random.choice(
         config['T'], size=config['n_mask_points'], replace=False
     )
-    for method in config['methods']:
-        names = []
-        with open(os.path.join(config['path_data'],'names_train.txt'), 'r') as f:
-            for line in f:
-                temp = line.strip()
-                names.append(temp[:-4])
-                
-        data = np.load(os.path.join(config['path_data'],'train_data_HCP_SCH_resampled.npz'))
-        train_data_init = []
-        for key in data:
-            temp = data[key][88:-88]
-            temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-            train_data_init.append(temp.T)
+    for method in config['methods']:               
+        path = config['path_data'] 
         
-        data = np.load(os.path.join(config['path_data'],'val_data_HCP_SCH_1_resampled.npz'))
+        data = np.load(os.path.join(path,'train_data_HCP_' + config['atlas'] + '.npz'))
+        train_data_hcp = []
+        for key in data:
+            if data[key].shape[0] == 1200:
+                temp = data[key][183:-184]
+                train_data_hcp.append(temp)
+        
+        data = np.load(os.path.join(path,'val_data_HCP_' + config['atlas'] + '.npz'))
         val_data = []
         for key in data:
-            temp = data[key][88:-88]
-            temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-            val_data.append(temp.T)
-        
-        data = np.load(os.path.join(config['path_data'],'val_data_HCP_SCH_2_resampled.npz'))
-        for key in data:
-            temp = data[key][88:-88]
-            temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-            val_data.append(temp.T)
+            if data[key].shape[0] == 1200:
+                temp = data[key][183:-184]
+                val_data.append(temp)
+    
             
-        data = np.load(os.path.join(config['path_data'],'test_data_HCP_SCH_1_resampled.npz'))
+        data = np.load(os.path.join(path,'test_data_HCP_' + config['atlas'] + '.npz'))
         test_data = []
         for key in data:
-            temp = data[key][88:-88]
-            temp = (temp - np.mean(temp,axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-            test_data.append(temp.T)
-    
-        data = np.load(os.path.join(config['path_data'],'test_data_HCP_SCH_2_resampled.npz'))
-        for key in data:
-            temp = data[key][88:-88]
-            temp = (temp - np.mean(temp, axis=0, keepdims=True)) / np.std(temp,axis=0, keepdims=True)
-            test_data.append(temp.T)
-    
+            if data[key].shape[0] == 1200:
+                temp = data[key][183:-184]
+                test_data.append(temp)
         
-        if method == "Noise-6dB":
-            train_data_temp = train_data_init
-            train_data = []
-            for data in train_data_temp:
-                for i in range(15):
-                    train_data.append(data + np.random.randn(*data.shape)*0.5)
-        elif method == "Noise-3dB":
-            train_data_temp = train_data_init
-            train_data = []
-            for data in train_data_temp:
-                for i in range(15):
-                    train_data.append(data + np.random.randn(*data.shape)*0.75)
+        train_data_hcp = preprocess_HCP(train_data_hcp, config['case'])
+        val_data = preprocess_HCP(val_data, config['case'])
+        test_data = preprocess_HCP(test_data, config['case'])
+        
+        if method == "HCP":
+            train_data = torch.from_numpy(np.stack(train_data_hcp))
         elif method == "CRVAE":
-            train_data = torch.load(config['path_augmented_crvae'])
+            train_data = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
             train_data = train_data.view(-1, train_data.shape[2], train_data.shape[3])
             train_data = train_data.permute(0,2,1)
         elif method == "rDCM-GEN":
-            train_data = torch.load(config['path_augmented_rdcm'])
+            train_data = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
             train_data = train_data.view(-1, train_data.shape[2], train_data.shape[3])
             train_data = train_data.permute(0,2,1)
         elif method == "TimeVAE":
-            train_data = np.load(config['path_augmented_timevae'])['data']
+            train_data = np.load(os.path.join(config['path_augmented_timevae'], config['case'], 'timeVAE_' + config['case'] + '_prior_samples.npy'))
             train_data = torch.from_numpy(train_data).permute(0,2,1)
             train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
         elif method == "TimeGAN":
-            train_data = np.load(config['path_augmented_timegan'])
+            train_data = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
             train_data = torch.from_numpy(train_data).permute(0,2,1)
             train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
-        elif method == "Diffusion-TS":
-            train_data = np.load(config['path_augmented_diffusion_ts'])
+        elif method == "T2IDIFF":
+            train_data = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
             train_data = torch.from_numpy(train_data).permute(0,2,1)
             train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
+        elif method == "DSFM":
+            train_data = np.load(os.path.join(config['path_augmented_dsfm'], config['case'], 'samples', 'samples.npy'))
+            train_data = torch.from_numpy(train_data).permute(0,2,1)
+            train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
+        
+        if config['data_scale'] == "small":
+            train_data = train_data[:5000,:,:config['T']]
+        elif config['data_scale'] == "medium":
+            train_data = train_data[:10000,:,:config['T']]
+        else:
+            train_data = train_data[:,:,:config['T']]
         
         train_dataset = fMRIDataset(train_data)
         val_dataset = fMRIDataset(val_data)
@@ -392,9 +428,14 @@ def main(config):
     
         train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, drop_last=True, num_workers=2)
         val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False, drop_last=False, num_workers=2)
-        test_loader = DataLoader(test_dataset, batch_size=len(test_data), shuffle=False, drop_last=False, num_workers=2)
+        test_loader = DataLoader(test_dataset, batch_size=config['batch_size'], shuffle=False, drop_last=False, num_workers=2)
     
         model_config = config['model_config']
+        if model_config['n_enc_layers'] == 5:
+            model_size = "heavyweight"
+        elif model_config['n_enc_layers'] == 2:
+            model_size = "lightweight"
+            
         model = TransformerMaskRecon(num_rois=config['R'],
                                      d_model=config['R'],
                                      nhead=model_config['nheads'], #4
@@ -451,13 +492,13 @@ def main(config):
         results['test_unmasked_mse'] = unmasked_mses
         
         if config['save_models']:
-            if not os.path.exists(os.path.join(config['path_save'],'models','MSM')):
-                os.makedirs(os.path.join(config['path_save'],'models','MSM'),exist_ok=True)   
-            torch.save(best_state_dict, os.path.join(config['path_save'],'models','MSM','model_' + method + '.pth'))
+            if not os.path.exists(os.path.join(config['path_save'],'models','MSM', model_size + '_' + config['data_scale'], config['case'])):
+                os.makedirs(os.path.join(config['path_save'],'models','MSM', model_size + '_' + config['data_scale'], config['case']),exist_ok=True)   
+            torch.save(best_state_dict, os.path.join(config['path_save'],'models','MSM', model_size + '_' + config['data_scale'], config['case'],'model_' + method + '.pth'))
         
         if config['save_results']:
-            os.makedirs(os.path.join(config['path_save'], 'MSM', method), exist_ok=True)
-            with open(os.path.join(config['path_save'], 'MSM', method, 'results.pkl'), 'wb') as f:
+            os.makedirs(os.path.join(config['path_save'], 'MSM', model_size + '_' + config['data_scale'], config['case'], method), exist_ok=True)
+            with open(os.path.join(config['path_save'], 'MSM', model_size + '_' + config['data_scale'], config['case'], method, 'results.pkl'), 'wb') as f:
                 pickle.dump(results,f)
         
         for sample_i in range(1,11):
@@ -502,7 +543,7 @@ def main(config):
             plt.tight_layout()
             
             if config['save_plots']:
-                save_dir = os.path.join('plots', 'reconstructed_plots', method)
+                save_dir = os.path.join('plots', 'reconstructed_plots', model_size + '_' + config['data_scale'], config['case'], method)
                 os.makedirs(save_dir, exist_ok=True)
                 plt.savefig(
                     os.path.join(save_dir, method + '_subject_' + str(sample_i) + '_rois.png'),
@@ -518,28 +559,40 @@ def main(config):
 
 if __name__ == '__main__':
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results'
-    config['path_augmented_rdcm'] = r'/media/student1/Extreme Pro/augmented_new/augmented_rDCM-GEN.pt'
-    config['path_augmented_crvae'] = r'/media/student1/Extreme Pro/CRVAE_models/augmented_CRVAE.pt'
-    config['path_augmented_timevae'] = r'/media/student1/Extreme Pro/TimeVAE_results/outputs/gen_data/HCP_train/timeVAE_HCP_train_prior_samples.npz'
-    config['path_augmented_timegan'] = r'/media/student1/Extreme Pro/TimeGAN_results/augmented_TimeGAN.npy'
-    config['path_augmented_diffusion_ts'] = r'/media/student1/Extreme Pro/Diffusion-TS_results/augmented_Diffusion-TS.npy'
-    config['methods'] = ['rDCM-GEN'] #['Noise-6dB','Noise-3dB', 'CRVAE', 'TimeVAE', 'TimeGAN','Diffusion-TS','rDCM-GEN'] 
-    config['T'] = 400
+    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
+    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
+    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
+    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
+    config['methods'] = ['CRVAE']#,'CRVAE','T2IDIFF', 'DSFM','TimeVAE', 'TimeGAN'] #['HCP','CRVAE','T2IDIFF', 'DSFM','rDCM-GEN','TimeVAE', 'TimeGAN'] 
+    config['case'] = "full_subsampled"
+    config['TR'] = 0.72
+    config['newTR'] = 2.0
+    if config['case'] == "full_original":
+        config['T'] = 833
+    elif config['case'] == "half_subsampled":
+        config['T'] = 210
+    elif config['case'] == "half_original":
+        config['T'] = 583
+    elif config['case'] == "full_subsampled":
+        config['T'] = 300
     config['R'] = 100
     config['atlas'] = 'SCH'
     config['batch_size'] = 128
     config['epochs'] = 200
     config['lr'] = 5e-4
     config['weight_decay'] = 1e-5
-    config['n_mask_points'] = 100
+    config['n_mask_points'] = config['T'] // 4
+    config['data_scale'] = "large"
     config['model_config'] = {}
-    config['model_config']['n_enc_layers'] = 5
-    config['model_config']['n_dec_layers'] = 5
+    config['model_config']['n_enc_layers'] = 2
+    config['model_config']['n_dec_layers'] = 2
     config['model_config']['nheads'] = 4
     config['model_config']['dropout'] = 0.1
-    config['device'] = "cuda:3"
+    config['device'] = "cuda:1"
     config['save_results'] = True
     config['save_models'] = True
     config['save_plots'] = True

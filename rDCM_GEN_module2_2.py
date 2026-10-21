@@ -7,7 +7,7 @@ from tqdm import tqdm
 from utils import rDCM_generate
 import argparse
 import pickle
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, resample
 
 def welch_psd(x, nperseg=1024, noverlap=None, nfft=None, window="hann", eps=1e-12):
     """
@@ -88,7 +88,7 @@ def welch_psd(x, nperseg=1024, noverlap=None, nfft=None, window="hann", eps=1e-1
 # Full Model + Loss
 # --------------------------
 class fALFFDecoderModel(nn.Module):
-    def __init__(self, A, transit, decay, epsilon, beta, TR, R, T, reps):
+    def __init__(self, A, transit, decay, epsilon, beta, TR, R, T, reps, wind, overlap):
         super().__init__()
         self.embedding = nn.Parameter(torch.randn(reps, R, T*16))
         self.A = A
@@ -99,6 +99,8 @@ class fALFFDecoderModel(nn.Module):
         self.TR = TR
         self.R = R
         self.T = T
+        self.wind = wind
+        self.overlap = overlap
 
     def forward(self):
         y_gen, x_gen = rDCM_generate(self.T,
@@ -111,7 +113,7 @@ class fALFFDecoderModel(nn.Module):
                               self.transit,
                               self.decay,
                               self.epsilon)
-        X_gen = welch_psd(x_gen.permute(0,2,1), 512, 256)
+        X_gen = welch_psd(x_gen.permute(0,2,1), self.wind, self.overlap)
         return y_gen, X_gen
 
 
@@ -149,12 +151,12 @@ def rmssd(x: torch.Tensor, eps: float = 0.0) -> torch.Tensor:
 
 def loss_function(X_gen, X, Y_gen, Y, y_gen, y, epoch): 
     triu_indices = torch.triu_indices(y_gen.shape[0], y_gen.shape[0], offset=1)
-    FC = torch.corrcoef(y.T)
-    fc_loss = 0.0
-    for y_g in y_gen:
-        FC_gen = torch.corrcoef(y_g.T)
-        fc_loss += 1-torch.corrcoef(torch.stack([FC[triu_indices[0], triu_indices[1]],FC_gen[triu_indices[0], triu_indices[1]]]))[0,1]
-    fc_loss = 10*fc_loss/y_gen.shape[0]    
+    #FC = torch.corrcoef(y.T)
+    #fc_loss = 0.0
+    #for y_g in y_gen:
+    #    FC_gen = torch.corrcoef(y_g.T)
+    #    fc_loss += 1-torch.corrcoef(torch.stack([FC[triu_indices[0], triu_indices[1]],FC_gen[triu_indices[0], triu_indices[1]]]))[0,1]
+    #fc_loss = 10*fc_loss/y_gen.shape[0]    
     mse_states = F.mse_loss(X_gen, X.expand(X_gen.shape[0],-1,-1))*100000
     mse_bold = F.mse_loss(Y_gen, Y.expand(Y_gen.shape[0],-1,-1))
     mse_rmssd = F.mse_loss(rmssd(y.unsqueeze(0)).repeat(y_gen.shape[0],1), rmssd(y_gen))*100
@@ -166,16 +168,17 @@ def loss_function(X_gen, X, Y_gen, Y, y_gen, y, epoch):
         print('')
         print('MSE states:', mse_states.item()) 
         print('MSE BOLD:', mse_bold.item()) 
-        print('FC Loss:', fc_loss.item())
+        #print('FC Loss:', fc_loss.item())
         print('Similarity Loss:', similarity_loss.item())
         print('rMSSD Loss:', mse_rmssd.item())
-    return mse_states + mse_bold + fc_loss + similarity_loss + mse_rmssd
+    return mse_states + mse_bold + similarity_loss + mse_rmssd #+fc_loss
 
 
 # --------------------------
 # Example usage
 # --------------------------
 def main(config):
+    TR = config['TR']
     device = torch.device(config['device'])      
 
     names = []
@@ -189,19 +192,60 @@ def main(config):
     names_new = []
     for key,name in zip(data,names):
         if data[key].shape[0] == 1200:
-            y = data[key][183:-184]
-            y = (y - np.mean(y, axis=0, keepdims=True))/(np.std(y, axis=0, keepdims=True) + 1e-6)
-            order = 4
-            cutoff = 0.1
-            fs = 1/0.72
-            b, a = butter(order, cutoff, btype='low', fs=fs)
-            y = filtfilt(b, a, y.T).T.astype('float32')
-            train_data.append(torch.from_numpy(y))
-            names_new.append(name)
+            if config['case'] == "full_original":
+                y = data[key][183:-184]
+                y = (y - np.mean(y, axis=0, keepdims=True))/(np.std(y, axis=0, keepdims=True) + 1e-6)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                newTR = TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+            elif config['case'] == "half_original":
+                y = data[key][183:-184]
+                y = y[125:708]
+                y = (y - np.mean(y, axis=0, keepdims=True))/(np.std(y, axis=0, keepdims=True) + 1e-6)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                newTR = TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+            elif config['case'] == "full_subsampled":
+                y = data[key][183:-184]
+                y = (y - np.mean(y, axis=0, keepdims=True))/(np.std(y, axis=0, keepdims=True) + 1e-6)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+                newTR = 2
+                rate = newTR/TR
+                new_samples = int(np.round(y.shape[0] / rate))
+                y = resample(y, new_samples)
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            elif config['case'] == "half_subsampled":
+                y = data[key][183:-184]
+                y = y[125:708]
+                y = (y - np.mean(y, axis=0, keepdims=True))/(np.std(y, axis=0, keepdims=True) + 1e-6)
+                order = 4
+                cutoff = 0.1
+                fs = 1/TR
+                b, a = butter(order, cutoff, btype='low', fs=fs)
+                y = filtfilt(b, a, y.T).T.astype('float32')
+                newTR = 2
+                rate = newTR/TR
+                new_samples = int(np.round(y.shape[0] / rate))
+                y = resample(y, new_samples)
+                y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
+            if not np.any(np.isnan(y)):
+                train_data.append(torch.from_numpy(y))
+                names_new.append(name)
+                
     
     T,R = train_data[0].shape
-    if not os.path.exists(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'fmris.pt')):
-        path = os.path.join(config['save_path'],'neural_noise')
+    if not os.path.exists(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'fmris.pt')):
+        path = os.path.join(config['save_path'],'neural_noise', config['case'])
         dire = os.listdir(path)
         neural_noises = torch.zeros(len(names_new),T*16,R)
         As = torch.zeros(len(names_new),R,R)
@@ -211,22 +255,28 @@ def main(config):
         epsilons =  torch.zeros(len(names_new))
         fmris = torch.zeros(len(names_new),T,R)
         names_rDCM_GEN = []
+        for temp in names_new:
+            names_rDCM_GEN.append(temp)
+        names_rDCM_GEN = np.array(names_rDCM_GEN, dtype=str)
         for i,file in enumerate(dire):
-            with open(os.path.join(path, file), 'rb') as f:
-                data = pickle.load(f)
-            pos = np.where(np.array(names_new) == file[:-4])
-            if file[:-4] in names_new:
-                try:
-                    fmris[i] = train_data[pos[0][0]]
-                    names_rDCM_GEN.append(np.array(names_new)[pos[0][0]])
-                    neural_noises[i] = data['neural_noises'][-1]
-                    As[i] = data['outputs'][-1][0]['Ep']['A']
-                    betas[i] = data['betas'][-1]
-                    transits[i] = data['outputs'][-1][0]['Ep']['transit']
-                    decays[i] = data['outputs'][-1][0]['Ep']['decay']
-                    epsilons[i] = data['outputs'][-1][0]['Ep']['epsilon']
-                except:
-                    print(i)
+            try:
+                with open(os.path.join(path, file), 'rb') as f:
+                    data = pickle.load(f)
+                pos = np.where(np.array(names_new) == file[:-4])
+                if file[:-4] in names_new:
+                    try:
+                        fmris[i] = train_data[pos[0][0]]
+                        names_rDCM_GEN[i] = np.array(names_new)[pos[0][0]]
+                        neural_noises[i] = data['neural_noises'][-1]
+                        As[i] = data['outputs'][-1][0]['Ep']['A']
+                        betas[i] = data['betas'][-1]
+                        transits[i] = data['outputs'][-1][0]['Ep']['transit']
+                        decays[i] = data['outputs'][-1][0]['Ep']['decay']
+                        epsilons[i] = data['outputs'][-1][0]['Ep']['epsilon']
+                    except:
+                        print(i)
+            except:
+                print(i)
         
         pos_delete = torch.unique(torch.where(torch.all(fmris == 0, dim=1))[0])
         mask = torch.ones(len(names_new), dtype=torch.bool, device=neural_noises.device)
@@ -238,28 +288,31 @@ def main(config):
         decays = decays[mask]
         epsilons = epsilons[mask]
         fmris = fmris[mask]
+        names_rDCM_GEN = names_rDCM_GEN[mask]
+        names_rDCM_GEN = names_rDCM_GEN.tolist()
+        
     
-        os.makedirs(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered'), exist_ok=True)
-        torch.save(neural_noises, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'neural_noises.pt'))
-        torch.save(As, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'As.pt'))
-        torch.save(betas, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'betas.pt'))
-        torch.save(transits, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'transits.pt'))
-        torch.save(decays, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'decays.pt'))
-        torch.save(epsilons, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'epsilons.pt'))
-        torch.save(fmris, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'fmris.pt'))
-        with open(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered','names_rDCM-GEN.txt'), 'w') as f:
+        os.makedirs(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case']), exist_ok=True)
+        torch.save(neural_noises, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'neural_noises.pt'))
+        torch.save(As, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'As.pt'))
+        torch.save(betas, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'betas.pt'))
+        torch.save(transits, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'transits.pt'))
+        torch.save(decays, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'decays.pt'))
+        torch.save(epsilons, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'epsilons.pt'))
+        torch.save(fmris, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'fmris.pt'))
+        with open(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'],'names_rDCM-GEN.txt'), 'w') as f:
             for item in names_rDCM_GEN:
                 f.write("%s\n" % item)
     else:
-        neural_noises = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'neural_noises.pt'))
-        As = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'As.pt'))
-        betas = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'betas.pt'))
-        transits = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'transits.pt'))
-        decays = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'decays.pt'))
-        epsilons = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'epsilons.pt'))
-        fmris = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', 'fmris.pt'))
+        neural_noises = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'neural_noises.pt'))
+        As = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'As.pt'))
+        betas = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'betas.pt'))
+        transits = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'transits.pt'))
+        decays = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'decays.pt'))
+        epsilons = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'epsilons.pt'))
+        fmris = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'fmris.pt'))
         names_rDCM_GEN = []
-        with open(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered','names_rDCM-GEN.txt'), 'r') as f:
+        with open(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'],'names_rDCM-GEN.txt'), 'r') as f:
             for line in f:
                 temp = line.strip()
                 names_rDCM_GEN.append(temp)
@@ -273,13 +326,13 @@ def main(config):
     fmris = fmris[config['start']:config['finish']]
     names_rDCM_GEN = names_rDCM_GEN[config['start']:config['finish']]
     
-    TR = config['TR']
     epochs = config['epochs']
-    for (y, neural_noise, A, beta, transit, decay, epsilon, name) in zip(fmris, neural_noises, As, betas, transits, decays, epsilons, names_rDCM_GEN):
-        if not os.path.exists(os.path.join(config['save_path'], 'augmented_rDCM-GEN', name + '.pt')):
+    for i, (y, neural_noise, A, beta, transit, decay, epsilon, name) in enumerate(zip(fmris, neural_noises, As, betas, transits, decays, epsilons, names_rDCM_GEN)):
+        if not os.path.exists(os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['case'], name + '.pt')):
+            T,R = y.shape
             _,x = rDCM_generate(T,
                                 R,
-                                TR,
+                                newTR,
                                 beta,
                                 neural_noise.unsqueeze(dim=0),
                                 A,
@@ -287,35 +340,40 @@ def main(config):
                                 transit,
                                 decay,
                                 epsilon)
-            X = welch_psd(x.double().T, 512, 256)
+            X = welch_psd(x.double().T, 4*int(T/4), 4*int(T/8))
             y = y.double()
-            Y = welch_psd(y.T, 128, 64)
+            Y = welch_psd(y.T, int(T/4), int(T/8))
             model = fALFFDecoderModel(A=A,
                                       transit=transit,
                                       decay=decay,
                                       epsilon=epsilon,
                                       beta=beta.to(device),
-                                      TR=TR,
+                                      TR=newTR,
                                       R=R, 
                                       T=T,
-                                      reps=config['reps']).to(device)
-            optimizer = torch.optim.Adam(model.parameters(), lr=3e-3)
+                                      reps=config['reps'],
+                                      wind=4*int(T/4),
+                                      overlap=4*int(T/8)).to(device)
+            optimizer = torch.optim.Adam(model.parameters(), lr=2.5e-3)
+            min_loss = 10e20
             with tqdm(total=epochs, desc='(T)') as pbar:
                 for epoch in range(epochs):
                     # Training step example
                     model.train()
                     optimizer.zero_grad()
                     y_gen, X_gen = model()
-                    Y_gen = welch_psd(y_gen.permute(0,2,1), 128, 64)
+                    Y_gen = welch_psd(y_gen.permute(0,2,1), int(T/4), int(T/8))
                     loss = loss_function(X_gen, X.to(device), Y_gen, Y.to(device), y_gen, y.to(device), epoch)
                     loss.backward()
                     optimizer.step()
                     pbar.set_postfix({'loss': loss.item()})
-                    pbar.update()  
-            os.makedirs(os.path.join(config['save_path'], 'augmented_rDCM-GEN'), exist_ok=True)
-            torch.save(y_gen, os.path.join(config['save_path'], 'augmented_rDCM-GEN', name + '.pt'))
-                
-
+                    pbar.update()
+                    if loss.item() < min_loss:
+                        min_loss = loss.item()
+                        y_gen_best = y_gen.detach().cpu()
+            os.makedirs(os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['case']), exist_ok=True)
+            torch.save(y_gen_best, os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['case'], name + '.pt'))
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run')
     parser.add_argument('--data_path', type=str, 
@@ -326,8 +384,9 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--TR', type=float, default=0.72)
     parser.add_argument('--reps', type=int, default=15)
-    parser.add_argument('--start', type=int, default=200)
-    parser.add_argument('--finish', type=int, default=400)
+    parser.add_argument('--start', type=int, default=0)
+    parser.add_argument('--finish', type=int, default=1250)
+    parser.add_argument('--case', type=str, default="full_subsampled")
     parser.add_argument('--device', type=str, default='cuda:2')
     args = parser.parse_args()
     config = {
@@ -339,6 +398,7 @@ if __name__ == '__main__':
         'reps': args.reps,
         'start': args.start,
         'finish': args.finish,
+        'case': args.case,
         'device': args.device
         }
     main(config)
