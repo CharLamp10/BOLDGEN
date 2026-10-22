@@ -2,34 +2,8 @@ library(data.table)
 library(ReX)
 library(ggplot2)
 
-path = "C:\\Users\\100063082\\Desktop\\rDCM-GEN_results\\ReX_files2"
-tau = 0.05
-
-#Noise 0.5
-path_noise05 <- file.path(path, paste0("tau", tau), "rex_Noise-6dB.csv")
-data_noise05 <- fread(path_noise05)
-x <- data_noise05[, 4:ncol(data_noise05)]
-sub <- data_noise05[,2]
-sess <- data_noise05[,3]
-x <- as.matrix(x)
-sub <- as.matrix(sub)
-sess <- as.matrix(sess)
-df_icc_noise05 <- data.frame(lme_ICC_1wayR(x, sub, sess))
-rex_plot.var.field(df_icc_noise05, size.point = 2, alpha.density = 0.3, color.point.fill = "red", color = "red")
-write.csv(df_icc_noise05, file = file.path(path, paste0("ICC_Noise-6dB_tau",tau,".csv")), row.names = FALSE)
-
-#Noise 0.75
-path_noise075 <- file.path(path, paste0("tau", tau), "rex_Noise-3dB.csv")
-data_noise075 <- fread(path_noise075)
-x <- data_noise075[, 4:ncol(data_noise075)]
-sub <- data_noise075[,2]
-sess <- data_noise075[,3]
-x <- as.matrix(x)
-sub <- as.matrix(sub)
-sess <- as.matrix(sess)
-df_icc_noise075 <- data.frame(lme_ICC_1wayR(x, sub, sess))
-rex_plot.var.field(df_icc_noise075, size.point = 2, alpha.density = 0.3, color.point.fill = "red", color = "red")
-write.csv(df_icc_noise075, file = file.path(path, paste0("ICC_Noise-3dB_tau",tau,".csv")), row.names = FALSE)
+path = "C:\\Users\\106742\\Desktop\\rDCM-GEN_results_HCP_2026\\ReX_files\\full_subsampled"
+tau = 0.15
 
 #CRVAE
 path_crvae <- file.path(path, paste0("tau", tau), "rex_CRVAE.csv")
