@@ -41,7 +41,7 @@ def load_results(parent: Path):
 def plot(stats, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 11,
+        "font.family": "DejaVu Sans", "font.size": 15,
         "pdf.fonttype": 42, "ps.fonttype": 42, "svg.fonttype": "none",
     })
     fig, ax = plt.subplots(figsize=(10, 5), layout="constrained")
@@ -58,7 +58,7 @@ def plot(stats, output_dir):
         )
         for bar, mean, sd in zip(bars, means, stds):
             ax.text(bar.get_x() + bar.get_width() / 2, mean + sd + 1.0,
-                    f"{mean:.1f}", ha="center", va="bottom", fontsize=9)
+                    f"{mean:.1f}", ha="center", va="bottom", fontsize=12)
             
     ax.set_xticks(x, [label for _, label in CONDITIONS])
     ax.set_ylabel("Subject fingerprinting accuracy (%)")
@@ -67,8 +67,9 @@ def plot(stats, output_dir):
     ax.yaxis.grid(True, alpha=0.18)
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
-    ax.tick_params(axis="x", length=0, pad=10)
-    ax.legend(ncol=3, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 1.13))
+    ax.tick_params(axis="x", length=0, pad=10, labelsize=14)
+    ax.tick_params(axis="y", labelsize=14)
+    ax.legend(ncol=3, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 1.13), fontsize=15)
 
     fig.savefig(os.path.join(output_dir, "subject_fingerprinting_barplot.png"),
                 dpi=600, bbox_inches="tight")

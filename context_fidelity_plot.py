@@ -48,7 +48,7 @@ def load_stats(parent):
 def plot(means, stds, output_dir, prefix="context_fid"):
     os.makedirs(output_dir, exist_ok=True)
     plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 10.5,
+        "font.family": "DejaVu Sans", "font.size": 15,
         "axes.spines.top": False, "axes.spines.right": False,
         "pdf.fonttype": 42, "ps.fonttype": 42, "svg.fonttype": "none",
     })
@@ -67,15 +67,15 @@ def plot(means, stds, output_dir, prefix="context_fid"):
     ax.set_yticklabels(["1", "2", "5", "10", "20", "50", "100"])
     ax.set_ylabel("Context-FID")
     ax.set_xticks(x, [lab for _, lab in SETTINGS])
-    ax.tick_params(axis="x", length=0, pad=9)
-    ax.tick_params(axis="y", length=0)
+    ax.tick_params(axis="x", length=0, pad=10, labelsize=14)
+    ax.tick_params(axis="y", length=0, labelsize=14)
     ax.grid(axis="y", which="major", alpha=0.20, linewidth=0.8)
     ax.set_axisbelow(True)
     ax.spines[["top", "right"]].set_visible(False)
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.14),
-              ncol=6, frameon=False, fontsize=9.5)
+              ncol=6, frameon=False, fontsize=14)
     fig.subplots_adjust(left=0.08, right=0.99, bottom=0.15, top=0.82)
-    fig.savefig(os.path.join(output_dir, f"{prefix}.png"), dpi=400, bbox_inches="tight")
+    fig.savefig(os.path.join(output_dir, f"{prefix}.png"), dpi=600, bbox_inches="tight")
     plt.close(fig)
     
     
