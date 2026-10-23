@@ -83,26 +83,33 @@ def load_results(parent, threshold):
     return out
 
 
+
 def plot(data, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     plt.rcParams.update({
         "font.family": "DejaVu Sans",
-        "font.size": 13,
-        "axes.labelsize": 15,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
+        "font.size": 20,
+        "axes.labelsize": 24,
+        "xtick.labelsize": 20,
+        "ytick.labelsize": 20,
         "pdf.fonttype": 42,
         "svg.fonttype": "none"
     })
 
-    # One row with three panels (AUC only)
-    fig, axes = plt.subplots(1, 3, figsize=(17, 4.8), sharey=False)
+    ylims = {
+        "ASD-DiagNet": (40, 75),
+        "BolT": (40, 75),
+        "VarCoNet": (65, 80)
+    }
+    
+    for model, methods in MODELS.items():
 
-    for col, (model, methods) in enumerate(MODELS.items()):
-        ax = axes[col]
+        # Create an independent figure for each architecture
+        fig, ax = plt.subplots(figsize=(12, 7))
 
         for j, method in enumerate(methods):
+
             # Column 0 corresponds to AUC
             values = data[model, method][:, 0]
 
@@ -110,52 +117,70 @@ def plot(data, output_dir):
             sd = values.std(ddof=1) if len(values) > 1 else 0
 
             ax.bar(
-                j, mean,
-                width=.76,
+                j,
+                mean,
+                width=0.76,
                 color=COLORS[method],
                 edgecolor="white",
-                linewidth=.6,
+                linewidth=0.6,
                 yerr=sd if len(values) > 1 else None,
-                capsize=3
+                capsize=5,
+                error_kw={
+                    "elinewidth": 1.5,
+                    "capthick": 1.5
+                }
             )
 
         ax.set_xticks(
             range(len(methods)),
             [LABELS.get(m, m) for m in methods],
-            rotation=40,
+            rotation=35,
             ha="right"
         )
-
-        ylims = {
-            "ASD-DiagNet": (40, 75),
-            "BolT": (40, 75),
-            "VarCoNet": (65, 80)
-        }
         
         ax.set_ylim(*ylims[model])
 
         ax.set_ylabel("AUC (%)")
 
-        ax.set_title(
-            model.replace("_", "-"),
-            weight="bold",
-            pad=14
+        # No title: add panel labels in Overleaf
+        # ax.set_title(model, weight="bold", pad=14)
+
+        ax.grid(axis="y", alpha=0.18)
+        ax.set_axisbelow(True)
+
+        ax.spines[["top", "right"]].set_visible(False)
+
+        ax.tick_params(
+            axis="x",
+            labelsize=20,
+            length=0,
+            pad=10
         )
 
-        ax.grid(axis="y", alpha=.18)
-        ax.set_axisbelow(True)
-        ax.spines[["top", "right"]].set_visible(False)
-        ax.tick_params(axis="both", length=0)
+        ax.tick_params(
+            axis="y",
+            labelsize=20,
+            length=0
+        )
+        
+        fig.tight_layout()
 
-    fig.tight_layout(w_pad=1.8)
+        # Save each architecture separately
+        filename = model.replace("-", "_")
 
-    fig.savefig(
-        os.path.join(output_dir, "asd_classification.png"),
-        dpi=600,
-        bbox_inches="tight"
-    )
+        fig.savefig(
+            os.path.join(output_dir, f"{filename}.png"),
+            dpi=600,
+            bbox_inches="tight"
+        )
 
-    plt.close(fig)
+        # Vector PDF for Overleaf
+        fig.savefig(
+            os.path.join(output_dir, f"{filename}.pdf"),
+            bbox_inches="tight"
+        )
+
+        plt.close(fig)
     
     
 def main():
