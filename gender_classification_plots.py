@@ -56,34 +56,22 @@ def plot(data, output_dir, prefix="gender_simclr"):
 
     plt.rcParams.update({
         "font.family": "DejaVu Sans",
-        "font.size": 13,
-        "axes.labelsize": 15,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
-        "legend.fontsize": 14,
+        "font.size": 28,
+        "axes.labelsize": 34,
+        "xtick.labelsize": 30,
+        "ytick.labelsize": 30,
+        "legend.fontsize": 28,
         "pdf.fonttype": 42,
         "svg.fonttype": "none",
     })
 
-    # Four panels: one for each duration/TR combination
-    fig, axes = plt.subplots(
-        2, 2,
-        figsize=(14.5, 9),
-        sharex=True,
-        sharey=True
-    )
-
     x = np.arange(len(TAUS))
     width = 0.35
 
-    # SETTINGS order:
-    # 10 min / TR 0.72, 10 min / TR 2.0,
-    # 7 min / TR 0.72, 7 min / TR 2.0
-    for idx, (folder, label) in enumerate(SETTINGS):
+    # Create four independent figures
+    for folder, label in SETTINGS:
 
-        row = idx // 2
-        col = idx % 2
-        ax = axes[row, col]
+        fig, ax = plt.subplots(figsize=(12, 8))
 
         for j, method in enumerate(METHODS):
 
@@ -102,10 +90,14 @@ def plot(data, output_dir, prefix="gender_simclr"):
                 means,
                 width * 0.94,
                 yerr=sds,
-                capsize=3,
+                capsize=5,
                 color=COLORS[j],
                 edgecolor="white",
-                linewidth=0.6,
+                linewidth=0.8,
+                error_kw={
+                    "elinewidth": 1.5,
+                    "capthick": 1.5
+                },
                 label="CR-VAE" if j == 0 else "rDCM-GEN"
             )
 
@@ -116,49 +108,59 @@ def plot(data, output_dir, prefix="gender_simclr"):
 
         ax.set_ylim(0, 100)
 
-        if col == 0:
-            ax.set_ylabel("AUC (%)")
+        ax.set_ylabel("AUC (%)")
+        ax.set_xlabel("SimCLR temperature (τ)", labelpad=15)
 
-        if row == 1:
-            ax.set_xlabel("SimCLR temperature (τ)")
-
-        ax.set_title(
-            label,
-            weight="bold",
-            pad=13
-        )
+        # No title: add configuration labels in Overleaf
+        # ax.set_title(label, weight="bold", pad=13)
 
         ax.grid(axis="y", alpha=0.2)
         ax.set_axisbelow(True)
 
         ax.spines[["top", "right"]].set_visible(False)
-        ax.tick_params(axis="both", length=0, pad=6)
 
-    # Shared legend
-    handles, labels = axes[0, 0].get_legend_handles_labels()
+        ax.tick_params(
+            axis="x",
+            labelsize=30,
+            length=0,
+            pad=12
+        )
 
-    fig.legend(
-        handles,
-        labels,
-        loc="upper center",
-        bbox_to_anchor=(0.5, 1.005),
-        ncol=2,
-        frameon=False
-    )
+        ax.tick_params(
+            axis="y",
+            labelsize=30,
+            length=0,
+            pad=10
+        )
 
-    fig.tight_layout(
-        rect=[0, 0, 1, 0.965],
-        h_pad=2.2,
-        w_pad=1.5
-    )
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.15),
+            ncol=2,
+            frameon=False,
+            fontsize=28,
+            columnspacing=1.2,
+            handlelength=1.4
+        )
 
-    fig.savefig(
-        os.path.join(output_dir, f"{prefix}.png"),
-        dpi=600,
-        bbox_inches="tight"
-    )
+        fig.tight_layout()
 
-    plt.close(fig)
+        # Save each temporal configuration separately
+        filename = f"{prefix}_{folder}"
+
+        fig.savefig(
+            os.path.join(output_dir, f"{filename}.png"),
+            dpi=600,
+            bbox_inches="tight"
+        )
+
+        # Vector PDF for Overleaf
+        fig.savefig(
+            os.path.join(output_dir, f"{filename}.pdf"),
+            bbox_inches="tight"
+        )
+
+        plt.close(fig)
     
     
 def main():
