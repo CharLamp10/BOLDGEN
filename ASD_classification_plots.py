@@ -89,10 +89,10 @@ def plot(data, output_dir):
 
     plt.rcParams.update({
         "font.family": "DejaVu Sans",
-        "font.size": 20,
-        "axes.labelsize": 24,
-        "xtick.labelsize": 20,
-        "ytick.labelsize": 20,
+        "font.size": 24,
+        "axes.labelsize": 30,
+        "xtick.labelsize": 26,
+        "ytick.labelsize": 26,
         "pdf.fonttype": 42,
         "svg.fonttype": "none"
     })
@@ -106,7 +106,7 @@ def plot(data, output_dir):
     for model, methods in MODELS.items():
 
         # Create an independent figure for each architecture
-        fig, ax = plt.subplots(figsize=(12, 7))
+        fig, ax = plt.subplots(figsize=(13, 8))
 
         for j, method in enumerate(methods):
 
@@ -134,7 +134,7 @@ def plot(data, output_dir):
         ax.set_xticks(
             range(len(methods)),
             [LABELS.get(m, m) for m in methods],
-            rotation=35,
+            rotation=30,
             ha="right"
         )
         
@@ -152,15 +152,16 @@ def plot(data, output_dir):
 
         ax.tick_params(
             axis="x",
-            labelsize=20,
+            labelsize=26,
             length=0,
-            pad=10
+            pad=12
         )
-
+        
         ax.tick_params(
             axis="y",
-            labelsize=20,
-            length=0
+            labelsize=26,
+            length=0,
+            pad=8
         )
         
         fig.tight_layout()
