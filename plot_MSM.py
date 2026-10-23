@@ -27,6 +27,7 @@ def read_values(path):
 def summarize(a):
     return (float(a.mean()), float(a.std(ddof=1)) if len(a)>1 else 0.)
 
+
 def load(parent,setting,CONFIGS):
     d={}
     for cfg,_ in CONFIGS:
@@ -44,92 +45,84 @@ def load(parent,setting,CONFIGS):
     return d
 
 def plot(d, title, out, stem, CONFIGS):
-    """One grouped bar chart; HCP is a seventh method only for small-data settings."""
+    """Single grouped bar chart, with depth-matched HCP reference in all four groups."""
     plt.rcParams.update({
         "font.family": "DejaVu Sans",
-        "font.size": 17,
-        "axes.labelsize": 21,
-        "xtick.labelsize": 17,
-        "ytick.labelsize": 17,
-        "legend.fontsize": 17,
+        "font.size": 21,
+        "axes.labelsize": 25,
+        "xtick.labelsize": 21,
+        "ytick.labelsize": 21,
+        "legend.fontsize": 20,
         "pdf.fonttype": 42,
         "svg.fonttype": "none"
     })
-    fig, ax = plt.subplots(figsize=(17, 7))
+    fig, ax = plt.subplots(figsize=(20, 9))
     x = np.arange(len(CONFIGS))
     w = .115
     methods = METHODS + ['HCP']
-    names = NAMES + ['Original HCP']
+    names = NAMES + ['HCP']
     colors = COLORS + ['#364A60']
     for j, method in enumerate(methods):
+        label_added = False
         for i, (cfg, _) in enumerate(CONFIGS):
-            if (cfg, method) not in d:
-                continue  # HCP exists only for heavyweight_small/lightweight_small.
-            mean, sd = d[cfg, method]
+            if method == 'HCP':
+                # The HCP reference is available only for the small-data settings.
+                # Reuse the same reference for both dataset sizes at matched depth.
+                reference_cfg = ('heavyweight_small' if cfg.startswith('heavyweight')
+                                 else 'lightweight_small')
+                key = (reference_cfg, 'HCP')
+            else:
+                key = (cfg, method)
+            if key not in d:
+                continue
+            mean, sd = d[key]
             pos = x[i] + (j - 3)*w
-            ax.bar(pos, mean, w*.94, yerr=sd, capsize=2.5,
+            ax.bar(pos, mean, w*.94, yerr=sd, capsize=3.5,
                    color=colors[j], edgecolor='white', linewidth=.5,
-                   label=names[j] if i == 0 or (method == 'HCP' and cfg == 'heavyweight_small') else None)
-    #ax.set_xticks(x, [name.replace(' / ', chr(10))+' samples' for _,name in CONFIGS])
+                   label=names[j] if not label_added else None)
+            label_added = True
+
     ax.set_xticks(
         x,
-        [
-            name.replace(" / ", "\n") + " samples"
-            for _, name in CONFIGS
-        ]
+        [name.replace(' / ', '\n') + ' samples' for _, name in CONFIGS]
     )
-    
-    ax.tick_params(
-        axis="x",
-        labelsize=17,
-        length=0,
-        pad=14
-    )
-    
-    ax.tick_params(
-        axis="y",
-        labelsize=17,
-        length=0
-    )
-    ax.set_ylabel('Masked reconstruction MSE')
+    ax.tick_params(axis='x', labelsize=21, length=0, pad=17)
+    ax.tick_params(axis='y', labelsize=21, length=0)
+    ax.set_ylabel('MSE', fontsize=25)
     ax.set_ylim(bottom=0)
-    #ax.set_title(title, fontsize=17, weight='bold', pad=18)
-    ax.grid(axis='y',alpha=.2)
+    # No title: configuration captions are added in Overleaf.
+    ax.grid(axis='y', alpha=.2)
     ax.set_axisbelow(True)
     ax.spines[['top','right']].set_visible(False)
-    #ax.tick_params(axis='x',length=0,pad=12)
-    #ax.tick_params(axis='y',length=0)
     ax.legend(
         loc="upper center",
-        bbox_to_anchor=(0.5, 1.20),
+        bbox_to_anchor=(0.5, 1.15),
         ncol=7,
         frameon=False,
-        fontsize=17,
-        columnspacing=1.2,
-        handlelength=1.5,
-        handletextpad=0.5
+        fontsize=20,
+        columnspacing=0.8,
+        handlelength=1.2,
+        handletextpad=0.4
     )
-    fig.subplots_adjust(
-        top=0.80,
-        bottom=0.23,
-        left=0.10,
-        right=0.98
-    )
-    os.makedirs(out,exist_ok=True)
-    fig.savefig(os.path.join(out, f'{stem}.png'),dpi=600,bbox_inches='tight')
+    fig.subplots_adjust(top=.74, bottom=.22, left=.09, right=.98)
+    os.makedirs(out, exist_ok=True)
+    fig.savefig(os.path.join(out, f'{stem}.png'), dpi=600, bbox_inches='tight')
+    #fig.savefig(os.path.join(out, f'{stem}.pdf'), bbox_inches='tight')
+    #fig.savefig(os.path.join(out, f'{stem}.svg'), bbox_inches='tight')
     plt.close(fig)
+    
     
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--parent_path", default=r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026')
-    parser.add_argument("--output-dir", default=r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/MSM')
+    parser.add_argument('--parent_path', default=r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026')
+    parser.add_argument('--output-dir', default=r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/MSM')
     args=parser.parse_args()
     for setting,title in SETTINGS:
-        if setting == "full_original" or setting == "full_subsampled":
+        if setting == 'full_original' or setting == 'full_subsampled':
             CONFIGS = [('heavyweight_large','5 layers / 18,375'),('lightweight_large','2 layers / 18,375'),('heavyweight_small','5 layers / 5,000'),('lightweight_small','2 layers / 5,000')]
-        elif setting == "half_original":
+        elif setting == 'half_original':
             CONFIGS = [('heavyweight_large','5 layers / 17,955'),('lightweight_large','2 layers / 17,955'),('heavyweight_small','5 layers / 5,000'),('lightweight_small','2 layers / 5,000')]
-        elif setting == "half_subsampled":
+        elif setting == 'half_subsampled':
             CONFIGS = [('heavyweight_large','5 layers / 18,345'),('lightweight_large','2 layers / 18,345'),('heavyweight_small','5 layers / 5,000'),('lightweight_small','2 layers / 5,000')]
         plot(load(args.parent_path,setting,CONFIGS),title,args.output_dir,'msm_'+setting,CONFIGS)
 
