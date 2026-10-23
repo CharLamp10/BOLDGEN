@@ -46,12 +46,16 @@ def load(parent,setting,CONFIGS):
 def plot(d, title, out, stem, CONFIGS):
     """One grouped bar chart; HCP is a seventh method only for small-data settings."""
     plt.rcParams.update({
-        'font.family':'DejaVu Sans','font.size':13,
-        'axes.labelsize':16,'xtick.labelsize':12,
-        'ytick.labelsize':13,'legend.fontsize':12,
-        'pdf.fonttype':42,'svg.fonttype':'none'
+        "font.family": "DejaVu Sans",
+        "font.size": 17,
+        "axes.labelsize": 21,
+        "xtick.labelsize": 17,
+        "ytick.labelsize": 17,
+        "legend.fontsize": 17,
+        "pdf.fonttype": 42,
+        "svg.fonttype": "none"
     })
-    fig, ax = plt.subplots(figsize=(15.5, 6.4))
+    fig, ax = plt.subplots(figsize=(17, 7))
     x = np.arange(len(CONFIGS))
     w = .115
     methods = METHODS + ['HCP']
@@ -66,17 +70,51 @@ def plot(d, title, out, stem, CONFIGS):
             ax.bar(pos, mean, w*.94, yerr=sd, capsize=2.5,
                    color=colors[j], edgecolor='white', linewidth=.5,
                    label=names[j] if i == 0 or (method == 'HCP' and cfg == 'heavyweight_small') else None)
-    ax.set_xticks(x, [name.replace(' / ', chr(10))+' samples' for _,name in CONFIGS])
+    #ax.set_xticks(x, [name.replace(' / ', chr(10))+' samples' for _,name in CONFIGS])
+    ax.set_xticks(
+        x,
+        [
+            name.replace(" / ", "\n") + " samples"
+            for _, name in CONFIGS
+        ]
+    )
+    
+    ax.tick_params(
+        axis="x",
+        labelsize=17,
+        length=0,
+        pad=14
+    )
+    
+    ax.tick_params(
+        axis="y",
+        labelsize=17,
+        length=0
+    )
     ax.set_ylabel('Masked reconstruction MSE')
     ax.set_ylim(bottom=0)
-    ax.set_title(title, fontsize=17, weight='bold', pad=18)
+    #ax.set_title(title, fontsize=17, weight='bold', pad=18)
     ax.grid(axis='y',alpha=.2)
     ax.set_axisbelow(True)
     ax.spines[['top','right']].set_visible(False)
-    ax.tick_params(axis='x',length=0,pad=12)
-    ax.tick_params(axis='y',length=0)
-    ax.legend(loc='upper center',bbox_to_anchor=(.5,1.29),ncol=7,frameon=False)
-    fig.subplots_adjust(top=.73,bottom=.20,left=.085,right=.985)
+    #ax.tick_params(axis='x',length=0,pad=12)
+    #ax.tick_params(axis='y',length=0)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.20),
+        ncol=7,
+        frameon=False,
+        fontsize=17,
+        columnspacing=1.2,
+        handlelength=1.5,
+        handletextpad=0.5
+    )
+    fig.subplots_adjust(
+        top=0.80,
+        bottom=0.23,
+        left=0.10,
+        right=0.98
+    )
     os.makedirs(out,exist_ok=True)
     fig.savefig(os.path.join(out, f'{stem}.png'),dpi=600,bbox_inches='tight')
     plt.close(fig)
