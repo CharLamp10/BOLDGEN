@@ -85,8 +85,8 @@ def main(config):
     augmented_dsfm = np.load(os.path.join(config['path_augmented_dsfm'], config['case'], 'samples', 'samples.npy'))
     
     data = train_data[10]
-    data_rdcmgen = augmented_rdcmgen[10,7][:data.shape[0]]
-    data_crvae = augmented_crvae[10,2][:data.shape[0]]
+    data_rdcmgen = augmented_rdcmgen[10,0][:data.shape[0]]
+    data_crvae = augmented_crvae[10,5][:data.shape[0]]
     data_timevae = augmented_timevae[0][:data.shape[0]]
     data_timevae = (data_timevae - np.mean(data_timevae, axis=0, keepdims=True))/np.std(data_timevae, axis=0, keepdims=True)
     data_timegan = augmented_timegan[0][:data.shape[0]]
@@ -128,6 +128,6 @@ if __name__ == "__main__":
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
     config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['case'] = 'half_subsampled'
+    config['case'] = 'half_original'
     config['TR'] = 0.72
     main(config)
