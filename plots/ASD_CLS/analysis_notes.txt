@@ -1,0 +1,10 @@
+F1: positive class ASD=1, probability >= 0.35. AUC uses probabilities.
+Plots show means and sample SD (ddof=1), not standard errors.
+Tests use paired repetition-level scores in the stored run order.
+Verify matching splits/seeds across methods; equal run counts do not verify pairing.
+Two-sided paired t-test; alpha=0.05. P-values are uncorrected for multiple comparisons.
+mean_difference_pp = method A minus method B, in percentage points.
+95% confidence intervals are unadjusted paired-difference intervals.
+p=NaN means insufficient pairs or zero-variance differences; it is not a valid test.
+Overlapping test splits can make repetition differences dependent; ordinary paired
+t-test p-values in that setting should be treated as exploratory.

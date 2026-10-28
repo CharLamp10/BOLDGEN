@@ -1,0 +1,6 @@
+Two-sided paired t-tests on test_masked_mse repetition values; raw p-values, no multiple-testing correction.
+Values must correspond to identical runs/seeds in identical order across methods; equal lengths do not establish valid pairing.
+Undefined tests (n<2 or constant paired differences) and unequal-length tests are reported as NA.
+HCP baseline for each large configuration is drawn from the matched-depth small setting, as in the original bar plots.
+Each matrix uses the six synthesis methods and HCP when available.
+Repeated or dependent runs can make ordinary paired t-test p-values exploratory.

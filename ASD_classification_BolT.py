@@ -340,14 +340,14 @@ if __name__ == "__main__":
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
     config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['ABIDEI', 'DSFM', 'T2IDIFF','rDCM-GEN', 'CRVAE', 'TimeVAE', 'TimeGAN']#, 'DSFM', 'ABIDEI','TimeVAE', 'TimeGAN','CRVAE','T2IDIFF']
+    config['methods'] = ['ABIDEI', 'DSFM', 'T2IDIFF', 'rDCM-GEN', 'CRVAE', 'TimeVAE', 'TimeGAN']#, 'DSFM', 'ABIDEI','TimeVAE', 'TimeGAN','CRVAE','T2IDIFF']
     config['atlas'] = 'SCH'
     # 15 * ceil(916 / 128) = 120 updates: the original ABIDEI training budget.
     # Keep this fixed across methods; increase it for a longer experiment.
     config['batch_size'] = 128
     config['num_classes'] = 2
     config['device'] = "cuda:1"
-    config['save_results'] = True
+    config['save_results'] = False
     config['repeats'] = 10
     config['eval_batch_size'] = 128
     config['preprocess_batch_size'] = 128

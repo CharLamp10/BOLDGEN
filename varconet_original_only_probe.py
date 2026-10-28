@@ -69,7 +69,6 @@ def _load_training_data(config, method):
         root = config[key]
         signals = torch.load(os.path.join(root, f"augmented_{tag}_orig_ABIDEI.pt"),
                              map_location="cpu", weights_only=True)
-        #signals = signals[:,:5,:,:]
         labels = torch.load(os.path.join(root, f"labels_augmented_{tag}_ABIDEI.pt"),
                             map_location="cpu", weights_only=True)
         if signals.ndim != 4:
@@ -613,12 +612,14 @@ def main(config):
         train_data, labels, lengths = (t.to(cache_device) for t in (train_data, labels, lengths))
         if subject_shape is not None:
             n, b = subject_shape
-            #if b != 5:
-            #    raise ValueError('Generated SSL data must contain exactly the fixed first five slices')
             train_batches = GeneratedPairBatches(train_data, subject_shape, config['batch_size'])
             print(f'SSL: {b} loaded slices per subject, indices 0..{b-1}; {n} subjects; random distinct pairs')
         else:
             train_batches = Batches((train_data, labels, lengths), config['batch_size'], shuffle=True)
+        #if method != 'ABIDEI':
+        #    probe_data = torch.cat((probe_data, train_data), dim=0)
+        #    probe_labels = torch.cat((probe_labels, labels))
+        #    probe_batches = Batches((probe_data, probe_labels), config['eval_batch_size'])
         test_aucs, y_trues, y_preds, probe_steps = [], [], [], []
         for run in range(config['repeats']):
             checkpoint_idx, test_idx = split_evaluation(
@@ -756,7 +757,7 @@ if __name__ == "__main__":
     config['lr_cls'] = 1e-4
     config['num_classes'] = 2
     config['device'] = "cuda:0"
-    config['save_results'] = True
+    config['save_results'] = False
     config['repeats'] = 10
     config['eval_batch_size'] = 128
     config['preprocess_batch_size'] = 128
@@ -766,4 +767,4 @@ if __name__ == "__main__":
     #    for seed2 in range(10):
     config['seed1'] = 30  # Optional integer; changed RNG ordering prevents exact replay.
     config['seed2'] = 6  # Optional integer; changed RNG ordering prevents exact replay.
-    main(config)
+    results_by_method = main(config)
