@@ -12,10 +12,10 @@ def plot_three_subplots(x, data, title, cat, filename):
     indices = [0, 99]
     for ax, idx in zip(axes, indices):
         ax.plot(x, data[:, idx], linewidth=2.5)
-        ax.set_ylabel(f'ROI {idx+1}', fontsize=20)
-        ax.tick_params(axis='both', labelsize=18)
+        ax.set_ylabel(f'ROI {idx+1}', fontsize=24)
+        ax.tick_params(axis='both', labelsize=22)
 
-    axes[-1].set_xlabel('Time (sec)', fontsize=20)
+    axes[-1].set_xlabel('Time (sec)', fontsize=24)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     os.makedirs(os.path.join('plots', 'BOLD_plots', cat), exist_ok=True)
@@ -84,9 +84,10 @@ def main(config):
     augmented_t2idiff = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
     augmented_dsfm = np.load(os.path.join(config['path_augmented_dsfm'], config['case'], 'samples', 'samples.npy'))
     
-    data = train_data[10]
-    data_rdcmgen = augmented_rdcmgen[10,0][:data.shape[0]]
-    data_crvae = augmented_crvae[10,5][:data.shape[0]]
+    i = 26 #10, 13, 23
+    data = train_data[i]
+    data_rdcmgen = augmented_rdcmgen[i,7][:data.shape[0]] #1, 7
+    data_crvae = augmented_crvae[i,5][:data.shape[0]] #2, 5
     data_timevae = augmented_timevae[0][:data.shape[0]]
     data_timevae = (data_timevae - np.mean(data_timevae, axis=0, keepdims=True))/np.std(data_timevae, axis=0, keepdims=True)
     data_timegan = augmented_timegan[0][:data.shape[0]]
@@ -128,6 +129,6 @@ if __name__ == "__main__":
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
     config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['case'] = 'half_original'
+    config['case'] = 'full_original'
     config['TR'] = 0.72
     main(config)

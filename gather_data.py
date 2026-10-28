@@ -44,7 +44,7 @@ for i,file in enumerate(dir_rdcmgen):
         data = torch.from_numpy(resample(data.numpy(), new_samples, axis=1))
         data_orig = torch.from_numpy(resample(data_orig, new_samples, axis=0))
     if cat == "ABIDEI":
-        if data.shape[1] >= 200 and label.size > 0:
+        if data.shape[1] >= 200 and label.size > 0 and TR < 2:
             data = (data[:,:200,:] - torch.mean(data[:,:200,:], dim=1, keepdim=True))/torch.std(data[:,:200,:], dim=1, keepdim=True)
             data_orig = (data_orig[:200,:] - torch.mean(data_orig[:200,:], dim=1, keepdim=True))/torch.std(data_orig[:200,:], dim=1, keepdim=True)
             data_rdcmgen.append(data)
@@ -79,7 +79,7 @@ for file in dir_crvae:
         data = torch.from_numpy(resample(data.numpy(), new_samples, axis=1))
         data_orig = torch.from_numpy(resample(data_orig, new_samples, axis=0))
     if cat == "ABIDEI":
-        if data.shape[1] >= 200 and label.size > 0 and file[:-3] in names_rdcmgen:
+        if data.shape[1] >= 200 and label.size > 0 and file[:-3] in names_rdcmgen and TR < 2:
             data = (data[:,:200,:] - torch.mean(data[:,:200,:], dim=1, keepdim=True))/torch.std(data[:,:200,:], dim=1, keepdim=True)
             data_orig = (data_orig[:200,:] - torch.mean(data_orig[:200,:], dim=1, keepdim=True))/torch.std(data_orig[:200,:], dim=1, keepdim=True)
             data_crvae.append(data)
