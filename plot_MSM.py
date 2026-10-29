@@ -167,7 +167,7 @@ def pvalue_label(p, alpha):
         return 'NA'
     number = f'{p:.2g}' if p >= .001 else f'{p:.1e}'
     stars = '***' if p < .001 else '**' if p < .01 else '*' if p < alpha else ''
-    return f'{number}\n{stars}' if stars else number
+    return stars#f'{number}\n{stars}' if stars else number
 
 
 def plot_pvalue_matrices(tests, values, setting, configs, output_dir, alpha=.05, dpi=600):
@@ -191,8 +191,8 @@ def plot_pvalue_matrices(tests, values, setting, configs, output_dir, alpha=.05,
         fig, ax = plt.subplots(figsize=(fig_size, fig_size*.86))
         im = ax.imshow(masked, cmap=cmap, vmin=0, vmax=alpha, interpolation='nearest')
         names = [DISPLAY[m] for m in methods]
-        ax.set_xticks(range(n), names, rotation=45, ha='right', fontsize=17)
-        ax.set_yticks(range(n), names, fontsize=17)
+        ax.set_xticks(range(n), names, rotation=45, ha='right', fontsize=24)
+        ax.set_yticks(range(n), names, fontsize=24)
         ax.set_xticks(np.arange(-.5, n, 1), minor=True)
         ax.set_yticks(np.arange(-.5, n, 1), minor=True)
         ax.grid(which='minor', color='white', linewidth=2)
@@ -202,11 +202,11 @@ def plot_pvalue_matrices(tests, values, setting, configs, output_dir, alpha=.05,
             for j in range(n):
                 p = matrix[i, j]
                 label = '—' if i == j else pvalue_label(p, alpha)
-                ax.text(j, i, label, ha='center', va='center', fontsize=15,
+                ax.text(j, i, label, ha='center', va='center', fontsize=24,
                         color='white' if np.isfinite(p) and p < alpha*.30 else '#172536')
         cbar = fig.colorbar(im, ax=ax, fraction=.045, pad=.035)
-        cbar.set_label('p-value', fontsize=18)
-        cbar.ax.tick_params(labelsize=14)
+        cbar.set_label('p-value', fontsize=24)
+        cbar.ax.tick_params(labelsize=20)
         fig.tight_layout()
         stem = f'msm_{setting}_{cfg}_pvalues'
         fig.savefig(output / f'{stem}.png', dpi=dpi, bbox_inches='tight')

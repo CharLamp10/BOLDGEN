@@ -298,8 +298,8 @@ def plot_pvalue_matrices(tests, output_dir, alpha=.05, dpi=600):
             fig, ax = plt.subplots(figsize=(fig_size, fig_size * .86))
             im = ax.imshow(masked, cmap=cmap, vmin=0, vmax=alpha, interpolation="nearest")
             names = [LABELS.get(m, m) for m in methods]
-            ax.set_xticks(range(n), names, rotation=45, ha="right", fontsize=17)
-            ax.set_yticks(range(n), names, fontsize=17)
+            ax.set_xticks(range(n), names, rotation=45, ha="right", fontsize=24)
+            ax.set_yticks(range(n), names, fontsize=24)
             #ax.set_title(f"{model} — {metric}: paired t-test p-values", fontsize=18, pad=20)
             ax.set_xticks(np.arange(-.5, n, 1), minor=True)
             ax.set_yticks(np.arange(-.5, n, 1), minor=True)
@@ -317,13 +317,14 @@ def plot_pvalue_matrices(tests, output_dir, alpha=.05, dpi=600):
                     else:
                         numeric = f"{p:.2g}" if p >= .001 else f"{p:.1e}"
                         stars = "***" if p < .001 else "**" if p < .01 else "*" if p < alpha else ""
-                        label = f"{numeric}\n{stars}" if stars else numeric
-                    ax.text(j, i, label, ha="center", va="center", fontsize=15,
+                        #label = f"{numeric}\n{stars}" if stars else numeric
+                        label = stars
+                    ax.text(j, i, label, ha="center", va="center", fontsize=24,
                             color="white" if np.isfinite(p) and p < alpha * .30 else "#172536")
 
             cbar = fig.colorbar(im, ax=ax, fraction=.045, pad=.035)
-            cbar.set_label("p-value", fontsize=18)
-            cbar.ax.tick_params(labelsize=14)
+            cbar.set_label("p-value", fontsize=24)
+            cbar.ax.tick_params(labelsize=20)
             fig.tight_layout(rect=(0, .035, 1, 1))
             filename = f"{model.replace('-', '_')}_{metric}_pvalues"
             fig.savefig(output / f"{filename}.png", dpi=dpi, bbox_inches="tight")
