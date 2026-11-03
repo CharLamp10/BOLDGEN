@@ -105,7 +105,6 @@ def main(config):
             plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
-    '''
     if 'CRVAE' in config['methods']:
         x_all = []
         for dat in data_crvae:
@@ -129,7 +128,7 @@ def main(config):
             plt.xticks([])
             plt.yticks([])
             os.makedirs(os.path.join('plots', 'TVFC', 'ABIDEI'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "CRVAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "CR-VAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
     if 'TimeVAE' in config['methods']:
@@ -207,9 +206,9 @@ def main(config):
             plt.xticks([])
             plt.yticks([])
             os.makedirs(os.path.join('plots', 'TVFC', 'ABIDEI'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "T2IDIFF_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "T2I-Diff_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
-    '''     
+  
     if 'DSFM' in config['methods']:
         x_all = []
         for dat in data_dsfm:
@@ -235,7 +234,7 @@ def main(config):
             os.makedirs(os.path.join('plots', 'TVFC', 'ABIDEI'), exist_ok=True)
             plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "DSFM_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
-    '''
+
     if 'rDCM-GEN' in config['methods']:
         x_all = []
         for dat in data_rdcmgen:
@@ -261,7 +260,6 @@ def main(config):
             os.makedirs(os.path.join('plots', 'TVFC', 'ABIDEI'), exist_ok=True)
             plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "rDCM-GEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
-    '''
 
 
 
@@ -271,10 +269,10 @@ if __name__ == '__main__':
     config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
     config['atlas'] = 'SCH'
     config['TR'] = 0.72
@@ -282,6 +280,6 @@ if __name__ == '__main__':
     config['device'] = "cuda:2"
     config['wind'] = 30
     config['subjects'] = 200
-    config['methods'] = ['ABIDEI', 'rDCM-GEN', 'CRVAE', 'TimeVAE', 'TimeGAN', 'T2IDIFF', 'DSFM']
+    config['methods'] = ['ABIDEI', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM']
     results = main(config)   
     

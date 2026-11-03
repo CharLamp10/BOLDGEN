@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from torch.optim import Adam, SGD
+from torch.optim import Adam
 from evaluation import BaseEvaluator
 from sklearn.metrics import roc_auc_score,roc_curve,f1_score
 import torch.nn.functional as F

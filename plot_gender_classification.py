@@ -21,7 +21,7 @@ SETTINGS = [
     ('half_subsampled', '7 min, TR = 2.0 s'),
 ]
 TAUS = [('tau_0.05', .05), ('tau_0.1', .1), ('tau_0.15', .15)]
-METHODS = ['CRVAE', 'rDCM-GEN']
+METHODS = ['CR-VAE', 'rDCM-GEN']
 COLORS = ['#D18A45', '#167B84']
 METRICS = [('AUC', 'best_test_auc'), ('F1', 'best_test_f1')]
 
@@ -80,11 +80,11 @@ def paired_tests(data):
     for folder, _ in SETTINGS:
         for _, tau in TAUS:
             for metric, _ in METRICS:
-                a = data[folder, tau, 'CRVAE', metric]
+                a = data[folder, tau, 'CR-VAE', metric]
                 b = data[folder, tau, 'rDCM-GEN', metric]
                 if len(a) != len(b):
                     raise ValueError(f'Cannot pair {folder} tau={tau} {metric}: '
-                                     f'CRVAE has {len(a)} scores, rDCM-GEN has {len(b)}. '
+                                     f'CR-VAE has {len(a)} scores, rDCM-GEN has {len(b)}. '
                                      'Align matching runs before testing.')
                 n = len(a)
                 difference = a - b
@@ -96,7 +96,7 @@ def paired_tests(data):
                     res = ttest_rel(a, b, alternative='two-sided')
                     t, p, status = float(res.statistic), float(res.pvalue), 'ok'
                 row = dict(setting=folder, tau=tau, metric=metric,
-                           method_a='CRVAE', method_b='rDCM-GEN', n_pairs=n,
+                           method_a='CR-VAE', method_b='rDCM-GEN', n_pairs=n,
                            mean_difference_pp=float(difference.mean()),
                            t_stat=t, p_raw=p, significance=significance(p), status=status)
                 rows.append(row)
@@ -176,12 +176,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--parent_path', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026')
     parser.add_argument('--output-dir', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/Gender_CLS')
-    parser.add_argument('--crvae-pattern', default='results_CRVAE*.pkl')
+    parser.add_argument('--crvae-pattern', default='results_CR-VAE*.pkl')
     parser.add_argument('--rdcm-pattern', default='results_rDCM-GEN*.pkl')
     parser.add_argument('--show-ns', action='store_true', help='Annotate nonsignificant/undefined comparisons too')
     parser.add_argument('--dpi', type=int, default=600)
     args = parser.parse_args()
-    data = load(args.parent_path, {'CRVAE': args.crvae_pattern, 'rDCM-GEN': args.rdcm_pattern})
+    data = load(args.parent_path, {'CR-VAE': args.crvae_pattern, 'rDCM-GEN': args.rdcm_pattern})
     tests = paired_tests(data)
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)

@@ -161,7 +161,7 @@ def main(config):
     result = {}
     result['orig'] = accuracies
     result['rDCM-GEN'] = accuracies_rdcm
-    result['CRVAE'] = accuracies_crvae
+    result['CR-VAE'] = accuracies_crvae
     
     os.makedirs(os.path.join(config['path_save'], 'SF', config['case']), exist_ok=True)
     with open(os.path.join(config['path_save'], 'SF', config['case'], 'results.pkl'), 'wb') as f:
@@ -174,6 +174,6 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_augmented_rdcm'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['case'] = "full_subsampled"
     result = main(config)

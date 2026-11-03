@@ -30,8 +30,8 @@ def load_training_data(config, method):
         root = config["path_data"]
         return load_pair(os.path.join(root, "ABIDEI_ASD_nilearn.npy"),
                          os.path.join(root, "ABIDEI_NC_nilearn.npy"))
-    if method in ("CRVAE", "CR-VAE", "rDCM-GEN"):
-        key, tag = (("path_augmented_crvae", "CR-VAE") if method in ("CRVAE", "CR-VAE")
+    if method in ("CR-VAE", "rDCM-GEN"):
+        key, tag = (("path_augmented_crvae", "CR-VAE") if method =="CR-VAE"
                     else ("path_augmented_rdcmgen", "rDCM-GEN"))
         root = config[key]
         signals = torch.load(os.path.join(root, f"augmented_{tag}_orig_ABIDEI.pt"),
@@ -55,7 +55,7 @@ def load_training_data(config, method):
         root = config["path_augmented_timegan"]
         return load_pair(os.path.join(root, "augmented_TimeGAN_ABIDEI_ASD.npy"),
                          os.path.join(root, "augmented_TimeGAN_ABIDEI_NC.npy"))
-    if method == "T2IDIFF":
+    if method == "T2I-Diff":
         root = os.path.join(config["path_augmented_t2idiff"], "ABIDEI")
         return (np.load(os.path.join(root, "gen_sig_ABIDEI_fold1.npy")),
                 np.load(os.path.join(root, "gen_label_sig_ABIDEI_fold1.npy")))
@@ -269,7 +269,7 @@ def main(config):
         train_data, labels = load_training_data(config, method)
         labels = prepare_labels(labels, len(train_data)).reshape(-1).long()
         train_data = prepare_signals(train_data, device, config['preprocess_batch_size'],
-            standardize=method in {'TimeVAE', 'TimeGAN', 'T2IDIFF', 'DSFM'})
+            standardize=method in {'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'})
         train_data, labels = train_data.to(cache_device), labels.to(cache_device)
         train_batches = Batches(train_data, labels, config['batch_size'], shuffle=True)
         print(f'{len(train_data)} labelled training samples; '
@@ -335,12 +335,12 @@ if __name__ == "__main__":
     config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026/ASD_CLC/BolT2'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['ABIDEI', 'DSFM', 'T2IDIFF', 'rDCM-GEN', 'CRVAE', 'TimeVAE', 'TimeGAN']#, 'DSFM', 'ABIDEI','TimeVAE', 'TimeGAN','CRVAE','T2IDIFF']
+    config['methods'] = ['ABIDEI', 'DSFM', 'T2I-Diff', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN']
     config['atlas'] = 'SCH'
     # 15 * ceil(916 / 128) = 120 updates: the original ABIDEI training budget.
     # Keep this fixed across methods; increase it for a longer experiment.

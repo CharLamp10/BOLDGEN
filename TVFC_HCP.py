@@ -154,7 +154,7 @@ def main(config):
             plt.show()
     
     
-    if 'CRVAE' in config['methods']:
+    if 'CR-VAE' in config['methods']:
         x_all = []
         for dat in data_crvae:
             for i in range(T - config['wind'] + 1):
@@ -177,7 +177,7 @@ def main(config):
             plt.xticks([])
             plt.yticks([])
             os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", config['case'], "CRVAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "CR-VAE_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
     if 'TimeVAE' in config['methods']:
@@ -232,7 +232,7 @@ def main(config):
             plt.savefig(os.path.join("plots","TVFC", config['case'], "TimeGAN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
             
-    if 'T2IDIFF' in config['methods']:
+    if 'T2I-Diff' in config['methods']:
         x_all = []
         for dat in data_t2idiff:
             for i in range(T - config['wind'] + 1):
@@ -318,10 +318,10 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
     config['atlas'] = 'SCH'
     config['TR'] = 0.72
@@ -340,6 +340,6 @@ if __name__ == '__main__':
         config['subjects'] = 100
     elif config['case'] == "half_subsampled":
         config['subjects'] = 145
-    config['methods'] = ['HCP', 'rDCM-GEN', 'CRVAE', 'TimeVAE', 'TimeGAN', 'T2IDIFF', 'DSFM']
+    config['methods'] = ['HCP', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM']
     results = main(config)   
     

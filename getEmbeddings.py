@@ -135,7 +135,7 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_models'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['methods'] = ['CRVAE','rDCM-GEN']
+    config['methods'] = ['CR-VAE','rDCM-GEN']
     config['atlas'] = 'SCH'
     config['case'] = "full_subsampled"
     config['TR'] = 0.72

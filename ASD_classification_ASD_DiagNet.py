@@ -24,8 +24,8 @@ def load_training_data(config, method):
         root = config["path_data"]
         return load_pair(os.path.join(root, "ABIDEI_ASD_nilearn.npy"),
                          os.path.join(root, "ABIDEI_NC_nilearn.npy"))
-    if method in ("CRVAE", "rDCM-GEN"):
-        key, tag = (("path_augmented_crvae", "CR-VAE") if method == "CRVAE"
+    if method in ("CR-VAE", "rDCM-GEN"):
+        key, tag = (("path_augmented_crvae", "CR-VAE") if method == "CR-VAE"
                     else ("path_augmented_rdcmgen", "rDCM-GEN"))
         root = config[key]
         signals = torch.load(os.path.join(root, f"augmented_{tag}_orig_ABIDEI.pt"),
@@ -58,7 +58,7 @@ def load_training_data(config, method):
                          os.path.join(root, "augmented_TimeGAN_ABIDEI_NC.npy"))
         temp = (np.concatenate((temp1[0], temp2[0]), axis=0), np.concatenate((temp1[1], temp2[1]), axis=0))
         return temp
-    if method == "T2IDIFF":
+    if method == "T2I-Diff":
         root = config["path_data"]
         temp1 = load_pair(os.path.join(root, "ABIDEI_ASD_nilearn.npy"),
                          os.path.join(root, "ABIDEI_NC_nilearn.npy"))
@@ -367,12 +367,12 @@ if __name__ == '__main__':
     config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026/ASD_CLC/ASD-DiagNet3'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['ABIDEI', 'rDCM-GEN', 'DSFM','T2IDIFF','TimeVAE','CRVAE','TimeGAN']  # 'ABIDEI','TimeVAE','TimeGAN','CRVAE','T2IDIFF','DSFM','rDCM-GEN']
+    config['methods'] = ['ABIDEI', 'rDCM-GEN', 'DSFM','T2I-Diff','TimeVAE','CR-VAE','TimeGAN']
     config['atlas'] = 'SCH'
     config['batch_size'] = 128
     config['corr_batch_size'] = 128

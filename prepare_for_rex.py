@@ -48,7 +48,7 @@ def main(config):
 if __name__ == "__main__":
     config = {}
     config['path'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['methods'] = ['CRVAE','rDCM-GEN']
+    config['methods'] = ['CR-VAE','rDCM-GEN']
     config['taus'] = [0.05, 0.1, 0.15]
     config['case'] = "full_subsampled"
     main(config)

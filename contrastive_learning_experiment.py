@@ -351,7 +351,7 @@ def main(config):
         for method in config['methods']:
             if method == 'rDCM-GEN':
                 batch_sampler = BatchSampler(names_rdcm.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
-            elif method == 'CRVAE':
+            elif method == 'CR-VAE':
                 batch_sampler = BatchSampler(names_crvae.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
             else:
                 batch_sampler = BatchSampler(names_train.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
@@ -386,7 +386,7 @@ def main(config):
                             idx = torch.randint(8, 15, (len(sample_inds),))
                             batch_data2 = batch_data_rdcm[torch.arange(len(sample_inds)), idx]
                             batch_data = [batch_data1.to(device), batch_data2.to(device)]
-                        elif 'CRVAE' in method:
+                        elif 'CR-VAE' in method:
                             batch_data_crvae = augmented_crvae[sample_inds]
                             idx = torch.randint(0, 8, (len(sample_inds),))
                             batch_data1 = batch_data_crvae[torch.arange(len(sample_inds)), idx]
@@ -454,8 +454,8 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_augmented_rdcm'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
-    config['methods'] = ['CRVAE','rDCM-GEN']  
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
+    config['methods'] = ['CR-VAE','rDCM-GEN']  
     config['atlas'] = 'SCH'
     config['case'] = "full_subsampled"
     config['TR'] = 0.72

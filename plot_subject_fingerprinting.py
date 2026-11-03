@@ -24,7 +24,7 @@ CONDITIONS = [
 ]
 METHODS = [
     ("orig", "Original", "#667788"),
-    ("CRVAE", "CR-VAE", "#D18A45"),
+    ("CR-VAE", "CR-VAE", "#D18A45"),
     ("rDCM-GEN", "rDCM-GEN", "#197C83"),
 ]
 

@@ -1,22 +1,3 @@
-"""VarCoNet: finish SSL, freeze the final encoder, then fit one linear probe.
-
-Dependencies: torch, numpy, scikit-learn, tqdm, lightning-bolts (pl_bolts).
-Edit the configuration at the bottom, then run this file.
-
-For each method/repetition:
-  1. Complete all SSL epochs without fitting a probe or using validation data.
-  2. Freeze the final encoder and encode probe-training/validation data once.
-  3. Fit one probe; select its best epoch using validation BCE.
-  4. Evaluate that probe with the final frozen encoder on the test set once.
-
-The supplied data-loading behavior is retained: load_pair adds generated
-rDCM-GEN variant 13 to every non-ABIDEII pair, including the probe data.
-CRVAE/rDCM-GEN encoder training retains the first five generated variants and
-uses two distinct full-length variants per subject as positive views.
-The ABIDEII split retains 50% test, 25% validation, and 25% unused data.
-The probe loop retains range(1, epochs_cls): epochs_cls=300 means 299 updates.
-"""
-
 import copy
 import os
 import pickle

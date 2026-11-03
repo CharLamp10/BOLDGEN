@@ -1,20 +1,3 @@
-#!/usr/bin/env python3
-"""
-fmri_transformer_masked_recon_pointmask.py
-
-Ready-to-run PyTorch script that trains a Transformer encoder-decoder to reconstruct
-randomly masked individual timepoints in multivariate fMRI-like time series.
-
-Input shape expected: [batch_size, num_rois, num_timepoints]
-Default atlas: SCH (100 ROIs).
-
-Masking: for each sample, exactly `n_mask_points` timepoints are selected uniformly
-at random (without replacement) and masked. This allows some masked points to end up
-successive by chance but does NOT enforce contiguous spans.
-
-Run:
-    python fmri_transformer_masked_recon_pointmask.py --plot
-"""
 import math
 from typing import Tuple
 import numpy as np
@@ -390,7 +373,7 @@ def main(config):
         
         if method == "HCP":
             train_data = torch.from_numpy(np.stack(train_data_hcp))
-        elif method == "CRVAE":
+        elif method == "CR-VAE":
             train_data = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
             train_data = train_data.view(-1, train_data.shape[2], train_data.shape[3])
             train_data = train_data.permute(0,2,1)
@@ -406,7 +389,7 @@ def main(config):
             train_data = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
             train_data = torch.from_numpy(train_data).permute(0,2,1)
             train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
-        elif method == "T2IDIFF":
+        elif method == "T2I-Diff":
             train_data = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
             train_data = torch.from_numpy(train_data).permute(0,2,1)
             train_data = (train_data - train_data.mean(dim=2, keepdim=True))/train_data.std(dim=2, keepdim=True)
@@ -562,12 +545,12 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['CRVAE']#,'CRVAE','T2IDIFF', 'DSFM','TimeVAE', 'TimeGAN'] #['HCP','CRVAE','T2IDIFF', 'DSFM','rDCM-GEN','TimeVAE', 'TimeGAN'] 
+    config['methods'] = ['HCP', 'TimeVAE', 'TimeGAN','CR-VAE','T2I-Diff', 'DSFM','rDCM-GEN'] 
     config['case'] = "full_subsampled"
     config['TR'] = 0.72
     config['newTR'] = 2.0

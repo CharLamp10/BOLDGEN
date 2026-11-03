@@ -110,9 +110,9 @@ def main(config):
     
     plot_three_subplots(x, data_timegan, 'TimeGAN', config['case'], 'time_series_TimeGAN.png')
     
-    plot_three_subplots(x, data_crvae, 'CRVAE', config['case'], 'time_series_CRVAE.png')
+    plot_three_subplots(x, data_crvae, 'CR-VAE', config['case'], 'time_series_CR-VAE.png')
     
-    plot_three_subplots(x, data_t2idiff, 'T2IDIFF', config['case'], 'time_series_T2IDIFF.png')
+    plot_three_subplots(x, data_t2idiff, 'T2I-Diff', config['case'], 'time_series_T2I-Diff.png')
     
     plot_three_subplots(x, data_dsfm, 'DSFM', config['case'], 'time_series_DSFM.png')
     
@@ -124,10 +124,10 @@ if __name__ == "__main__":
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
     config['case'] = 'full_original'
     config['TR'] = 0.72

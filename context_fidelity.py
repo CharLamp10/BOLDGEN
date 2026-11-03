@@ -86,7 +86,7 @@ def main(config):
         train_real = train_real[:,:256,:]
         test_real = test_real[:,:256,:]
         
-        if method == "CRVAE":
+        if method == "CR-VAE":
             test_gen = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
             test_gen = test_gen.view(-1, test_gen.shape[2], test_gen.shape[3])
             test_gen = test_gen.numpy()
@@ -100,7 +100,7 @@ def main(config):
         elif method == "TimeGAN":
             test_gen = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
             test_gen = (test_gen - test_gen.mean(axis=2, keepdims=True))/test_gen.std(axis=2, keepdims=True)
-        elif method == "T2IDIFF":
+        elif method == "T2I-Diff":
             test_gen = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
             test_gen = (test_gen - test_gen.mean(axis=2, keepdims=True))/test_gen.std(axis=2, keepdims=True)
         elif method == "DSFM":
@@ -139,12 +139,12 @@ if __name__ == '__main__':
     config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
     config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
     config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
+    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['CRVAE', 'TimeVAE', 'TimeGAN','T2IDIFF', 'DSFM','rDCM-GEN']
+    config['methods'] = ['CR-VAE', 'TimeVAE', 'TimeGAN','T2I-Diff', 'DSFM','rDCM-GEN']
     config['case'] = "full_subsampled"
     config['TR'] = 0.72
     config['newTR'] = 2.0
