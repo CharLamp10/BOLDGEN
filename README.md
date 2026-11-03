@@ -105,3 +105,9 @@ Repeat experiments with other HCP configurations as required: `full_original`, `
 ## Citation
 
 If you use this repository, please cite the accompanying rDCM-GEN manuscript when its bibliographic information becomes available, and cite the original rDCM and dataset publications as appropriate.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). See the [LICENSE](LICENSE) file for details.
+
+Third-party components remain subject to their respective copyright notices and license terms.
