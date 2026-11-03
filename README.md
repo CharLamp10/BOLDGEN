@@ -34,7 +34,6 @@ The workflow has two principal modules:
 | `rDCM_GEN_module2_HCP.py`, `rDCM_GEN_module2_ABIDE.py` | Module 2 generation of augmented time series. |
 | `rdcm.py`, `reverse_dcm.py`, `utils.py`, `utils1.py` | rDCM, forward-model, and supporting numerical utilities. |
 | `dcm_euler_integration_extension.cpp` | C++ / PyTorch extension for Euler integration. |
-| `CR_VAE_augmentation.py` | Subject-specific CR-VAE baseline augmentation. |
 | `contrastive_learning_experiment.py`, `gender_classification.py`, `prepare_for_rex.py` | Contrastive pretraining, linear downstream classification, and ReX preparation. |
 | `MSM_experiment.py` | Masked sequence modeling with Transformer encoder–decoders. |
 | `ASD_classification_ASD_DiagNet.py`, `ASD_classification_BolT.py`, `ASD_classification_VarCoNet*.py` | ASD classification experiments. |
@@ -106,7 +105,3 @@ Repeat experiments with other HCP configurations as required: `full_original`, `
 ## Citation
 
 If you use this repository, please cite the accompanying rDCM-GEN manuscript when its bibliographic information becomes available, and cite the original rDCM and dataset publications as appropriate.
-
-## License
-
-No license is declared in this repository at the time of writing. Please contact the repository owner about reuse permissions.
