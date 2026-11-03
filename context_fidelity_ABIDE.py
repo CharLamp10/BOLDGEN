@@ -83,9 +83,9 @@ if __name__ == '__main__':
     config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CRVAE_augmented'
     config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
     config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2IDIFF'
+    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
     config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['DSFM'] #['CRVAE', 'TimeVAE', 'TimeGAN','T2IDIFF','DSFM','rDCM-GEN']
+    config['methods'] = ['CRVAE', 'TimeVAE', 'TimeGAN','T2IDIFF','DSFM','rDCM-GEN']
     config['TR'] = 0.72
     config['newTR'] = 2.0
     config['R'] = 100

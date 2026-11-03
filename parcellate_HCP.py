@@ -4,19 +4,7 @@ import numpy as np
 
 #FIX IF CONFOUNDS IS MISSING
 atlas = 'SCH'
-
-if atlas == "AAL3":
-    path_atlas = r'C:\Users\100063082\Desktop\atlases\AAL3v1.nii'
-elif atlas == "AICHA":
-    path_atlas = r'C:\Users\100063082\Desktop\atlases\AICHA.nii'
-elif atlas == "BN":
-    path_atlas = r'C:\Users\100063082\Desktop\atlases\BN_Atlas_246_2mm.nii'
-elif atlas == "SCH":
-    path_atlas = r'C:\Users\100063082\Desktop\atlases\Schaefer2018_100Parcels_17Networks_order_FSLMNI152_2mm.nii'
-elif atlas == "A424":
-    path_atlas = r'C:\Users\100063082\Desktop\atlases\A424+2mm.nii'
-elif atlas == "AAL":
-    path_atlas = r'C:\Users\100063082\Desktop\atlases\ROI_MNI_V4.nii'
+path_atlas = r'C:\Users\100063082\Desktop\atlases\Schaefer2018_100Parcels_17Networks_order_FSLMNI152_2mm.nii'
     
 
 

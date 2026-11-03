@@ -8,12 +8,7 @@ os.makedirs(save_path, exist_ok=True)
 path_data_SCH = r'E:\HCP_2026_nilearn\ROISignals_SCH'
 
 data_dir = os.listdir(path_data_SCH)
-Times_AICHA = []
-Times_AAL3 = []
-Times_BN = []
 Times_SCH = []
-Times_AAL = []
-Times_A424 = []
 names_train = []
 for data in data_dir:
     feature_dir_sch = os.path.join(path_data_SCH, data, 'ROISignals.npy')
