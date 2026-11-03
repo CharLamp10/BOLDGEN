@@ -1,3 +1,6 @@
+"""Extract HCP ZIP archives and delete successfully extracted ZIP files."""
+import argparse
+
 import os
 import zipfile
 
@@ -30,5 +33,8 @@ def unzip_and_delete_zip(folder_path):
                 print(f"Error processing {zip_path}: {e}")
 
 if __name__ == "__main__":
-    folder = r"D:\HCP_new"
+    parser = argparse.ArgumentParser(description="Extract and remove HCP ZIP archives")
+    parser.add_argument("--folder", required=True, help="Directory with ZIP archives")
+    args = parser.parse_args()
+    folder = args.folder
     unzip_and_delete_zip(folder)

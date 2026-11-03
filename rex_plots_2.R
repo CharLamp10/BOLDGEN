@@ -1,3 +1,5 @@
+# Plot normalized ReX gradient flow comparisons of learned embeddings.
+
 library(data.table)
 library(ReX)
 library(ggplot2)

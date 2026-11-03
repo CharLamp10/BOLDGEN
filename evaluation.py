@@ -1,3 +1,5 @@
+"""Define the shared evaluation interface for downstream classifiers."""
+
 import torch
 from abc import ABC, abstractmethod
 

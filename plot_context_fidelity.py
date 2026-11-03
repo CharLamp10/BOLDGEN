@@ -172,8 +172,8 @@ def plot_pvalue_matrices(tests, output_dir, alpha=.05, dpi=600):
 
 def main():
     parser = argparse.ArgumentParser(description='Context-FID bar plot and paired p-value matrices')
-    parser.add_argument('--parent', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026')
-    parser.add_argument('--output-dir', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/cFID')
+    parser.add_argument('--parent', required=True)
+    parser.add_argument('--output-dir', required=True)
     parser.add_argument('--alpha', type=float, default=.05)
     parser.add_argument('--dpi', type=int, default=600)
     args = parser.parse_args()

@@ -1,3 +1,6 @@
+"""Visualize empirical and generated regional BOLD time series."""
+import argparse
+
 import torch
 import numpy as np
 import os
@@ -120,15 +123,27 @@ def main(config):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Visualize empirical and generated regional BOLD time series.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--path_augmented_timevae', type=str, required=True)
+    parser.add_argument('--path_augmented_timegan', type=str, required=True)
+    parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
+    parser.add_argument('--path_augmented_dsfm', type=str, required=True)
+    parser.add_argument('--case', type=str, default='full_original')
+    parser.add_argument('--TR', type=float, default=0.72)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN'
-    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
-    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
-    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['case'] = 'full_original'
-    config['TR'] = 0.72
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['path_augmented_timevae'] = args.path_augmented_timevae
+    config['path_augmented_timegan'] = args.path_augmented_timegan
+    config['path_augmented_t2idiff'] = args.path_augmented_t2idiff
+    config['path_augmented_dsfm'] = args.path_augmented_dsfm
+    config['case'] = args.case
+    config['TR'] = args.TR
     main(config)

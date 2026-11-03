@@ -1,3 +1,5 @@
+"""Plot masked reconstruction errors and paired significance matrices."""
+
 import argparse
 import csv
 import itertools
@@ -216,8 +218,8 @@ def plot_pvalue_matrices(tests, values, setting, configs, output_dir, alpha=.05,
 
 def main():
     parser = argparse.ArgumentParser(description='Plot MSM error and uncorrected paired t-test p-value matrices')
-    parser.add_argument('--parent_path', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026')
-    parser.add_argument('--output-dir', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/MSM')
+    parser.add_argument('--parent_path', required=True)
+    parser.add_argument('--output-dir', required=True)
     parser.add_argument('--alpha', type=float, default=.05)
     parser.add_argument('--dpi', type=int, default=600)
     args = parser.parse_args()

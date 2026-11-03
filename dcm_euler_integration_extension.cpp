@@ -1,3 +1,5 @@
+// Provide an accelerated PyTorch extension for DCM Euler integration.
+
 #include <torch/extension.h>
 #include <vector>
 #include <cmath>

@@ -165,9 +165,9 @@ def plot(stats, tests, output_dir, dpi=600, show_ns=False):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent_path", type=Path,
-                        default=Path("/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026"))
+                        required=True)
     parser.add_argument("--output-dir", type=Path,
-                        default=Path("/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/SF"))
+                        required=True)
     parser.add_argument("--dpi", type=int, default=600)
     parser.add_argument("--show-ns", action="store_true",
                         help="Show brackets for nonsignificant comparisons too")

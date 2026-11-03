@@ -1,3 +1,5 @@
+"""Generate subject-specific augmented HCP BOLD signals (Module 2)."""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -377,9 +379,9 @@ def main(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run')
     parser.add_argument('--data_path', type=str, 
-                        default=r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026')
+                        required=True)
     parser.add_argument('--save_path', type=str, 
-                        default=r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results')
+                        required=True)
     parser.add_argument('--atlas', type=str, default='SCH')
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--TR', type=float, default=0.72)

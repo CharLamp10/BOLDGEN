@@ -1,3 +1,6 @@
+"""Train and evaluate Transformer masked sequence modeling on augmented HCP data."""
+import argparse
+
 import math
 from typing import Tuple
 import numpy as np
@@ -541,19 +544,48 @@ def main(config):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Train and evaluate Transformer masked sequence modeling on augmented HCP data.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--path_augmented_timevae', type=str, required=True)
+    parser.add_argument('--path_augmented_timegan', type=str, required=True)
+    parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
+    parser.add_argument('--path_augmented_dsfm', type=str, required=True)
+    parser.add_argument('--methods', nargs="+", type=str, default=['HCP', 'TimeVAE', 'TimeGAN','CR-VAE','T2I-Diff', 'DSFM','rDCM-GEN'])
+    parser.add_argument('--case', type=str, default="full_subsampled")
+    parser.add_argument('--TR', type=float, default=0.72)
+    parser.add_argument('--newTR', type=float, default=2.0)
+    parser.add_argument('--R', type=int, default=100)
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--lr', type=float, default=5e-4)
+    parser.add_argument('--weight_decay', type=float, default=1e-5)
+    parser.add_argument('--data_scale', type=str, default="large")
+    parser.add_argument('--model_n_enc_layers', type=int, default=2)
+    parser.add_argument('--model_n_dec_layers', type=int, default=2)
+    parser.add_argument('--model_nheads', type=int, default=4)
+    parser.add_argument('--model_dropout', type=float, default=0.1)
+    parser.add_argument('--device', type=str, default="cuda:1")
+    parser.add_argument('--save_results', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--save_models', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--save_plots', action=argparse.BooleanOptionalAction, default=True)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
-    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
-    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['HCP', 'TimeVAE', 'TimeGAN','CR-VAE','T2I-Diff', 'DSFM','rDCM-GEN'] 
-    config['case'] = "full_subsampled"
-    config['TR'] = 0.72
-    config['newTR'] = 2.0
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['path_augmented_timevae'] = args.path_augmented_timevae
+    config['path_augmented_timegan'] = args.path_augmented_timegan
+    config['path_augmented_t2idiff'] = args.path_augmented_t2idiff
+    config['path_augmented_dsfm'] = args.path_augmented_dsfm
+    config['methods'] = args.methods 
+    config['case'] = args.case
+    config['TR'] = args.TR
+    config['newTR'] = args.newTR
     if config['case'] == "full_original":
         config['T'] = 833
     elif config['case'] == "half_subsampled":
@@ -562,22 +594,22 @@ if __name__ == '__main__':
         config['T'] = 583
     elif config['case'] == "full_subsampled":
         config['T'] = 300
-    config['R'] = 100
-    config['atlas'] = 'SCH'
-    config['batch_size'] = 128
-    config['epochs'] = 200
-    config['lr'] = 5e-4
-    config['weight_decay'] = 1e-5
+    config['R'] = args.R
+    config['atlas'] = args.atlas
+    config['batch_size'] = args.batch_size
+    config['epochs'] = args.epochs
+    config['lr'] = args.lr
+    config['weight_decay'] = args.weight_decay
     config['n_mask_points'] = config['T'] // 4
-    config['data_scale'] = "large"
+    config['data_scale'] = args.data_scale
     config['model_config'] = {}
-    config['model_config']['n_enc_layers'] = 2
-    config['model_config']['n_dec_layers'] = 2
-    config['model_config']['nheads'] = 4
-    config['model_config']['dropout'] = 0.1
-    config['device'] = "cuda:1"
-    config['save_results'] = True
-    config['save_models'] = True
-    config['save_plots'] = True
+    config['model_config']['n_enc_layers'] = args.model_n_enc_layers
+    config['model_config']['n_dec_layers'] = args.model_n_dec_layers
+    config['model_config']['nheads'] = args.model_nheads
+    config['model_config']['dropout'] = args.model_dropout
+    config['device'] = args.device
+    config['save_results'] = args.save_results
+    config['save_models'] = args.save_models
+    config['save_plots'] = args.save_plots
     main(config)
     

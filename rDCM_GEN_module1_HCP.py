@@ -1,3 +1,5 @@
+"""Estimate HCP-specific EC and endogenous neural fluctuations (Module 1)."""
+
 import torch
 import torch.nn.functional as F
 from rdcm import tapas_rdcm_estimate, tapas_rdcm_model_specification
@@ -195,9 +197,9 @@ def main(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run')
     parser.add_argument('--data_path', type=str, 
-                        default=r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026')
+                        required=True)
     parser.add_argument('--save_path', type=str, 
-                        default=r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results')
+                        required=True)
     parser.add_argument('--start', type=int, default=0)
     parser.add_argument('--finish', type=int, default=2000)
     parser.add_argument('--TR', type=float, default=0.72)

@@ -1,3 +1,6 @@
+"""Train and evaluate VarCoNet with subject-specific synthetic augmentation."""
+import argparse
+
 import math
 import os
 import pickle
@@ -1053,54 +1056,99 @@ def main(config):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Train and evaluate VarCoNet with subject-specific synthetic augmentation.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE', 'rDCM-GEN'])
+    parser.add_argument('--model_dim_feedforward', type=int, default=1024)
+    parser.add_argument('--model_layers', type=int, default=1)
+    parser.add_argument('--model_n_heads', type=int, default=1)
+    parser.add_argument('--model_max_length', type=int, default=200)
+    parser.add_argument('--ssl_epochs', type=int, default=50)
+    parser.add_argument('--selection_epochs', type=int, default=50)
+    parser.add_argument('--warm_up_epochs', type=int, default=10)
+    parser.add_argument('--lr', type=float, default=1.5e-4)
+    parser.add_argument('--tau', type=float, default=0.054)
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--max_length', type=int, default=200)
+    parser.add_argument('--min_length', type=int, default=80)
+    parser.add_argument('--epochs_cls', type=int, default=300)
+    parser.add_argument('--lr_cls', type=float, default=1e-4)
+    parser.add_argument('--num_classes', type=int, default=2)
+    parser.add_argument('--device', type=str, default="cuda:0")
+    parser.add_argument('--save_results', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--repeats', type=int, default=10)
+    parser.add_argument('--eval_batch_size', type=int, default=128)
+    parser.add_argument('--preprocess_batch_size', type=int, default=128)
+    parser.add_argument('--cache_on_gpu', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--probe_eval_interval', type=int, default=1)
+    parser.add_argument('--probe_candidates_include_original', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--cache_probe_features_on_gpu', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--probe_feature_batch_size', type=int, default=1024)
+    parser.add_argument('--probe_attention_input_dim', type=int, default=64)
+    parser.add_argument('--probe_attention_hidden_dim', type=int, default=32)
+    parser.add_argument('--probe_attention_lr', type=float, default=0.02)
+    parser.add_argument('--probe_selection_steps', type=int, default=50)
+    parser.add_argument('--probe_hard_eval_interval', type=int, default=1)
+    parser.add_argument('--probe_selector_warmup_steps', type=int, default=50)
+    parser.add_argument('--probe_meta_lr', type=float, default=0.1)
+    parser.add_argument('--probe_temperature_start', type=float, default=1.0)
+    parser.add_argument('--probe_temperature_end', type=float, default=0.3)
+    parser.add_argument('--probe_exploration', type=float, default=0.02)
+    parser.add_argument('--probe_entropy_weight', type=float, default=0.0)
+    parser.add_argument('--seed1', type=int, default=30)
+    parser.add_argument('--seed2', type=int, default=6)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026/ASD_CLC/VarCoNet'
-    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['methods'] = ['CR-VAE', 'rDCM-GEN'] 
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['methods'] = args.methods 
     config['model_config'] = {}
-    config['model_config']['dim_feedforward'] = 1024
-    config['model_config']['layers'] = 1
-    config['model_config']['n_heads'] = 1
-    config['model_config']['max_length'] = 200
-    config['ssl_epochs'] = 50  # Stage 1: ONLY contrastive training.
-    config['selection_epochs'] = 50  # Stage 2: encoder permanently frozen.
-    config['warm_up_epochs'] = 10
-    config['lr'] = 1.5e-4
-    config['tau'] = 0.054
-    config['batch_size'] = 128
-    config['max_length'] = 200
-    config['min_length'] = 80
+    config['model_config']['dim_feedforward'] = args.model_dim_feedforward
+    config['model_config']['layers'] = args.model_layers
+    config['model_config']['n_heads'] = args.model_n_heads
+    config['model_config']['max_length'] = args.model_max_length
+    config['ssl_epochs'] = args.ssl_epochs  # Stage 1: ONLY contrastive training.
+    config['selection_epochs'] = args.selection_epochs  # Stage 2: encoder permanently frozen.
+    config['warm_up_epochs'] = args.warm_up_epochs
+    config['lr'] = args.lr
+    config['tau'] = args.tau
+    config['batch_size'] = args.batch_size
+    config['max_length'] = args.max_length
+    config['min_length'] = args.min_length
     config['train_length_limits'] = [config['min_length'],config['max_length']]
-    config['epochs_cls'] = 300
-    config['lr_cls'] = 1e-4
-    config['num_classes'] = 2
-    config['device'] = "cuda:0"
-    config['save_results'] = True
-    config['repeats'] = 10
-    config['eval_batch_size'] = 128
-    config['preprocess_batch_size'] = 128
-    config['cache_on_gpu'] = False  # True needs space for raw signals + training activations.
-    config['probe_eval_interval'] = 1  # Retains original validation-loss selection frequency.
-    config['probe_candidates_include_original'] = False
+    config['epochs_cls'] = args.epochs_cls
+    config['lr_cls'] = args.lr_cls
+    config['num_classes'] = args.num_classes
+    config['device'] = args.device
+    config['save_results'] = args.save_results
+    config['repeats'] = args.repeats
+    config['eval_batch_size'] = args.eval_batch_size
+    config['preprocess_batch_size'] = args.preprocess_batch_size
+    config['cache_on_gpu'] = args.cache_on_gpu  # True needs space for raw signals + training activations.
+    config['probe_eval_interval'] = args.probe_eval_interval  # Retains original validation-loss selection frequency.
+    config['probe_candidates_include_original'] = args.probe_candidates_include_original
     config['probe_candidate_indices'] = None  # None = every available augmentation.
     config['probe_baseline_index'] = None  # Compare to your existing slice; None disables comparison.
-    config['cache_probe_features_on_gpu'] = True  # False saves GPU memory but transfers more data.
-    config['probe_feature_batch_size'] = 1024
-    config['probe_attention_input_dim'] = 64
-    config['probe_attention_hidden_dim'] = 32
-    config['probe_attention_lr'] = 0.02
-    config['probe_selection_steps'] = 50  # Attention updates per frozen selection round.
-    config['probe_hard_eval_interval'] = 1 
-    config['probe_selector_warmup_steps'] = 50
-    config['probe_meta_lr'] = 0.1  # Automatically capped by a feature-energy stability bound.
-    config['probe_temperature_start'] = 1.0
-    config['probe_temperature_end'] = 0.3
-    config['probe_exploration'] = 0.02
-    config['probe_entropy_weight'] = 0.0
+    config['cache_probe_features_on_gpu'] = args.cache_probe_features_on_gpu  # False saves GPU memory but transfers more data.
+    config['probe_feature_batch_size'] = args.probe_feature_batch_size
+    config['probe_attention_input_dim'] = args.probe_attention_input_dim
+    config['probe_attention_hidden_dim'] = args.probe_attention_hidden_dim
+    config['probe_attention_lr'] = args.probe_attention_lr
+    config['probe_selection_steps'] = args.probe_selection_steps  # Attention updates per frozen selection round.
+    config['probe_hard_eval_interval'] = args.probe_hard_eval_interval 
+    config['probe_selector_warmup_steps'] = args.probe_selector_warmup_steps
+    config['probe_meta_lr'] = args.probe_meta_lr  # Automatically capped by a feature-energy stability bound.
+    config['probe_temperature_start'] = args.probe_temperature_start
+    config['probe_temperature_end'] = args.probe_temperature_end
+    config['probe_exploration'] = args.probe_exploration
+    config['probe_entropy_weight'] = args.probe_entropy_weight
     #for seed1 in range(42,43):
     #    for seed2 in range(10):
-    config['seed1'] = 30  # Optional integer; changed RNG ordering prevents exact replay.
-    config['seed2'] = 6  # Optional integer; changed RNG ordering prevents exact replay.
+    config['seed1'] = args.seed1  # Optional integer; changed RNG ordering prevents exact replay.
+    config['seed2'] = args.seed2  # Optional integer; changed RNG ordering prevents exact replay.
     main(config)

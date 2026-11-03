@@ -1,3 +1,6 @@
+"""Implement rDCM estimation, model specification, and simulation routines."""
+import argparse
+
 import torch
 import time
 import numpy as np
@@ -2153,8 +2156,12 @@ def tapas_rdcm_model_specification(Y, U=None, args=None):
     return DCM
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="rDCM model-estimation example")
+    parser.add_argument("--data_path", required=True, help="MAT file for the first example")
+    parser.add_argument("--test_data_path", required=True, help="MAT file for the rDCM test example")
+    args = parser.parse_args()
     from scipy.io import loadmat
-    data = loadmat('data.mat')
+    data = loadmat(args.data_path)
     
     # Example usage
     torch.set_default_device("cpu")
@@ -2174,7 +2181,7 @@ if __name__ == '__main__':
             'c': np.ones((3,3))
             }
     
-    data = loadmat('test_rdcm_data.mat')
+    data = loadmat(args.test_data_path)
     Y = {
          'y': data['y'],
          'dt': data['TR']

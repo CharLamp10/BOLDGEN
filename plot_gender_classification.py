@@ -174,8 +174,8 @@ def plot(data, tests, output_dir, prefix='gender_simclr', dpi=600, show_ns=False
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--parent_path', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026')
-    parser.add_argument('--output-dir', default='/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/Gender_CLS')
+    parser.add_argument('--parent_path', required=True)
+    parser.add_argument('--output-dir', required=True)
     parser.add_argument('--crvae-pattern', default='results_CR-VAE*.pkl')
     parser.add_argument('--rdcm-pattern', default='results_rDCM-GEN*.pkl')
     parser.add_argument('--show-ns', action='store_true', help='Annotate nonsignificant/undefined comparisons too')

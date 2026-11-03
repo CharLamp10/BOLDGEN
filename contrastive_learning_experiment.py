@@ -1,3 +1,6 @@
+"""Pretrain a Transformer encoder using subject-specific contrastive views."""
+import argparse
+
 import torch
 import torch.nn as nn
 import numpy as np
@@ -450,32 +453,57 @@ def main(config):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Pretrain a Transformer encoder using subject-specific contrastive views.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcm', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','rDCM-GEN'])
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--case', type=str, default="full_subsampled")
+    parser.add_argument('--TR', type=float, default=0.72)
+    parser.add_argument('--newTR', type=float, default=2.0)
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--shuffle', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--taus', nargs="+", type=float, default=[0.05, 0.1, 0.15])
+    parser.add_argument('--lr', type=float, default=1e-4)
+    parser.add_argument('--warm_up_epochs', type=int, default=10)
+    parser.add_argument('--model_num_layers', type=int, default=4)
+    parser.add_argument('--model_num_heads', type=int, default=4)
+    parser.add_argument('--model_dim_feedforward', type=int, default=1024)
+    parser.add_argument('--model_out_dim', type=int, default=4096)
+    parser.add_argument('--model_D', type=int, default=512)
+    parser.add_argument('--device', type=str, default="cuda:0")
+    parser.add_argument('--save_results', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--save_models', action=argparse.BooleanOptionalAction, default=True)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['path_augmented_rdcm'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['methods'] = ['CR-VAE','rDCM-GEN']  
-    config['atlas'] = 'SCH'
-    config['case'] = "full_subsampled"
-    config['TR'] = 0.72
-    config['newTR'] = 2.0
-    config['batch_size'] = 128
-    config['shuffle'] = True
-    config['epochs'] = 200
-    config['taus'] = [0.05, 0.1, 0.15]
-    config['lr'] = 1e-4
-    config['warm_up_epochs'] = 10
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcm'] = args.path_augmented_rdcm
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['methods'] = args.methods  
+    config['atlas'] = args.atlas
+    config['case'] = args.case
+    config['TR'] = args.TR
+    config['newTR'] = args.newTR
+    config['batch_size'] = args.batch_size
+    config['shuffle'] = args.shuffle
+    config['epochs'] = args.epochs
+    config['taus'] = args.taus
+    config['lr'] = args.lr
+    config['warm_up_epochs'] = args.warm_up_epochs
     config['eval_epochs'] = list(range(1,config['epochs']+1))
     config['model_config'] = {}
-    config['model_config']['num_layers'] = 4
-    config['model_config']['num_heads'] = 4
-    config['model_config']['dim_feedforward'] = 1024
-    config['model_config']['out_dim'] = 4096
-    config['model_config']['D'] = 512
-    config['device'] = "cuda:0"
-    config['save_results'] = True
-    config['save_models'] = True
+    config['model_config']['num_layers'] = args.model_num_layers
+    config['model_config']['num_heads'] = args.model_num_heads
+    config['model_config']['dim_feedforward'] = args.model_dim_feedforward
+    config['model_config']['out_dim'] = args.model_out_dim
+    config['model_config']['D'] = args.model_D
+    config['device'] = args.device
+    config['save_results'] = args.save_results
+    config['save_models'] = args.save_models
     main(config)
 
 

@@ -1,3 +1,5 @@
+"""Provide additional rDCM and neural-noise generation utilities."""
+
 import torch
 import numpy as np
 from rdcm import tapas_rdcm_model_specification, tapas_rdcm_set_options,tapas_rdcm_get_convolution_bm,tapas_dcm_euler_make_indices

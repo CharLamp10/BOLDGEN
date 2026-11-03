@@ -1,3 +1,6 @@
+"""Train and evaluate the BolT Transformer for cross-dataset ASD classification."""
+import argparse
+
 parent_path = r'/home/student1/Desktop/Charalampos_Lamprou/baselines'
 import sys
 sys.path.append(parent_path)
@@ -331,30 +334,55 @@ def main(config):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Train and evaluate the BolT Transformer for cross-dataset ASD classification.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--path_augmented_timevae', type=str, required=True)
+    parser.add_argument('--path_augmented_timegan', type=str, required=True)
+    parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
+    parser.add_argument('--path_augmented_dsfm', type=str, required=True)
+    parser.add_argument('--methods', nargs="+", type=str, default=['ABIDEI', 'DSFM', 'T2I-Diff', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN'])
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--num_classes', type=int, default=2)
+    parser.add_argument('--device', type=str, default="cuda:1")
+    parser.add_argument('--save_results', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--repeats', type=int, default=10)
+    parser.add_argument('--eval_batch_size', type=int, default=128)
+    parser.add_argument('--preprocess_batch_size', type=int, default=128)
+    parser.add_argument('--cache_on_gpu', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--eval_every_n_steps', type=int, default=4)
+    parser.add_argument('--seed1', type=int, default=30)
+    parser.add_argument('--seed2', type=int, default=6)
+    parser.add_argument('--validation_fraction', type=float, default=0.5)
+    parser.add_argument('--save_models', action=argparse.BooleanOptionalAction, default=False)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026/ASD_CLC/BolT2'
-    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
-    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
-    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['ABIDEI', 'DSFM', 'T2I-Diff', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN']
-    config['atlas'] = 'SCH'
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['path_augmented_timevae'] = args.path_augmented_timevae
+    config['path_augmented_timegan'] = args.path_augmented_timegan
+    config['path_augmented_t2idiff'] = args.path_augmented_t2idiff
+    config['path_augmented_dsfm'] = args.path_augmented_dsfm
+    config['methods'] = args.methods
+    config['atlas'] = args.atlas
     # 15 * ceil(916 / 128) = 120 updates: the original ABIDEI training budget.
     # Keep this fixed across methods; increase it for a longer experiment.
-    config['batch_size'] = 128
-    config['num_classes'] = 2
-    config['device'] = "cuda:1"
-    config['save_results'] = False
-    config['repeats'] = 10
-    config['eval_batch_size'] = 128
-    config['preprocess_batch_size'] = 128
-    config['cache_on_gpu'] = False  # True needs space for raw signals + training activations.
-    config['eval_every_n_steps'] = 4  # Validate every 8 updates, and at max_steps.
-    config['seed1'] = 30  # Optional integer; changed RNG ordering prevents exact replay.
-    config['seed2'] = 6  # Optional integer; changed RNG ordering prevents exact replay.
-    config['validation_fraction'] = 0.5
-    config['save_models'] = False  # Optional checkpoint for each repetition.
+    config['batch_size'] = args.batch_size
+    config['num_classes'] = args.num_classes
+    config['device'] = args.device
+    config['save_results'] = args.save_results
+    config['repeats'] = args.repeats
+    config['eval_batch_size'] = args.eval_batch_size
+    config['preprocess_batch_size'] = args.preprocess_batch_size
+    config['cache_on_gpu'] = args.cache_on_gpu  # True needs space for raw signals + training activations.
+    config['eval_every_n_steps'] = args.eval_every_n_steps  # Validate every 8 updates, and at max_steps.
+    config['seed1'] = args.seed1  # Optional integer; changed RNG ordering prevents exact replay.
+    config['seed2'] = args.seed2  # Optional integer; changed RNG ordering prevents exact replay.
+    config['validation_fraction'] = args.validation_fraction
+    config['save_models'] = args.save_models  # Optional checkpoint for each repetition.
     main(config)

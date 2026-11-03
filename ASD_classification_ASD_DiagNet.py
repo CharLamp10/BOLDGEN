@@ -1,3 +1,6 @@
+"""Train and evaluate ASD-DiagNet on empirical and augmented ABIDE rs-fMRI data."""
+import argparse
+
 import copy
 import os
 import pickle
@@ -363,27 +366,51 @@ def main(config):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Train and evaluate ASD-DiagNet on empirical and augmented ABIDE rs-fMRI data.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--path_augmented_timevae', type=str, required=True)
+    parser.add_argument('--path_augmented_timegan', type=str, required=True)
+    parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
+    parser.add_argument('--path_augmented_dsfm', type=str, required=True)
+    parser.add_argument('--methods', nargs="+", type=str, default=['ABIDEI', 'rDCM-GEN', 'DSFM','T2I-Diff','TimeVAE','CR-VAE','TimeGAN'])
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--corr_batch_size', type=int, default=128)
+    parser.add_argument('--eval_batch_size', type=int, default=128)
+    parser.add_argument('--cache_on_gpu', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--repeats', type=int, default=10)
+    parser.add_argument('--drop_last', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--mode', type=str, default="both")
+    parser.add_argument('--p_bernoulli', type=float, default=None)
+    parser.add_argument('--lam_factor', type=float, default=1.0)
+    parser.add_argument('--device', type=str, default="cuda:0")
+    parser.add_argument('--save_results', action=argparse.BooleanOptionalAction, default=True)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026/ASD_CLC/ASD-DiagNet3'
-    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
-    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
-    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['methods'] = ['ABIDEI', 'rDCM-GEN', 'DSFM','T2I-Diff','TimeVAE','CR-VAE','TimeGAN']
-    config['atlas'] = 'SCH'
-    config['batch_size'] = 128
-    config['corr_batch_size'] = 128
-    config['eval_batch_size'] = 128
-    config['cache_on_gpu'] = False
-    config['epochs'] = 200
-    config['repeats'] = 10
-    config['drop_last'] = False
-    config['mode'] = "both"
-    config['p_bernoulli'] = None
-    config['lam_factor'] = 1.0
-    config['device'] = "cuda:0"
-    config['save_results'] = True
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['path_augmented_timevae'] = args.path_augmented_timevae
+    config['path_augmented_timegan'] = args.path_augmented_timegan
+    config['path_augmented_t2idiff'] = args.path_augmented_t2idiff
+    config['path_augmented_dsfm'] = args.path_augmented_dsfm
+    config['methods'] = args.methods
+    config['atlas'] = args.atlas
+    config['batch_size'] = args.batch_size
+    config['corr_batch_size'] = args.corr_batch_size
+    config['eval_batch_size'] = args.eval_batch_size
+    config['cache_on_gpu'] = args.cache_on_gpu
+    config['epochs'] = args.epochs
+    config['repeats'] = args.repeats
+    config['drop_last'] = args.drop_last
+    config['mode'] = args.mode
+    config['p_bernoulli'] = args.p_bernoulli
+    config['lam_factor'] = args.lam_factor
+    config['device'] = args.device
+    config['save_results'] = args.save_results
     main(config)

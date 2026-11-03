@@ -1,3 +1,6 @@
+"""Implement differentiable neuronal and hemodynamic forward modeling."""
+import argparse
+
 # torch>=2.1
 import torch
 import torch.nn as nn
@@ -352,6 +355,11 @@ class GenerativeModel(nn.Module):
         
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Differentiable DCM forward-model example")
+    parser.add_argument("--path", required=True, help="Directory containing the HCP data NPZ")
+    parser.add_argument("--TR", type=float, default=1.5)
+    parser.add_argument("--atlas", default="SCH")
+    args = parser.parse_args()
     # -----------------------------
     # Example training loop (sketch)
     # -----------------------------
@@ -361,11 +369,10 @@ if __name__ == '__main__':
     Easiest is to choose model T so that T_hat == T_y.
     """
     
-    TR = 1.5
-    
+    TR = args.TR
     B = 1
-    path = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP'
-    atlas = 'SCH'
+    path = args.path
+    atlas = args.atlas
     data = np.load(os.path.join(path,'train_data_HCP_' + atlas + '_resampled_all.npz'))
     train_data = []
     for key in data:

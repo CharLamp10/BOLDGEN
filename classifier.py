@@ -1,3 +1,5 @@
+"""Define a linear downstream classifier and its evaluation routine."""
+
 import torch
 from torch import nn
 from torch.optim import Adam

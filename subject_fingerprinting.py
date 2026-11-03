@@ -1,3 +1,6 @@
+"""Evaluate preservation of individual functional-connectivity fingerprints."""
+import argparse
+
 import os
 import numpy as np
 import torch
@@ -170,10 +173,17 @@ def main(config):
     return result
     
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Evaluate preservation of individual functional-connectivity fingerprints.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcm', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--case', type=str, default="full_subsampled")
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['path_augmented_rdcm'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['case'] = "full_subsampled"
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcm'] = args.path_augmented_rdcm
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['case'] = args.case
     result = main(config)

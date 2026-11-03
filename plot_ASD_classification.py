@@ -335,8 +335,8 @@ def plot_pvalue_matrices(tests, output_dir, alpha=.05, dpi=600):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parent_path", "--parent-path", dest="parent_path",
-        default=r"/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026")
-    parser.add_argument("--output-dir", default=r"/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN/plots/ASD_CLS")
+        required=True)
+    parser.add_argument("--output-dir", required=True)
     parser.add_argument("--threshold", type=float, default=0.35)
     parser.add_argument("--alpha", type=float, default=0.05)
     parser.add_argument("--dpi", type=int, default=600)

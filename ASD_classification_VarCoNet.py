@@ -1,3 +1,6 @@
+"""Train and evaluate the original VarCoNet ASD-classification baseline."""
+import argparse
+
 import copy
 import os
 import pickle
@@ -522,31 +525,56 @@ def main(config):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Train and evaluate the original VarCoNet ASD-classification baseline.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--method', type=str, default='ABIDEI')
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--warm_up_epochs', type=int, default=10)
+    parser.add_argument('--lr', type=float, default=1.5e-4)
+    parser.add_argument('--tau', type=float, default=0.054)
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--max_length', type=int, default=200)
+    parser.add_argument('--min_length', type=int, default=80)
+    parser.add_argument('--epochs_cls', type=int, default=300)
+    parser.add_argument('--lr_cls', type=float, default=1e-4)
+    parser.add_argument('--num_classes', type=int, default=2)
+    parser.add_argument('--device', type=str, default='cuda:3')
+    parser.add_argument('--save_results', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--repeats', type=int, default=10)
+    parser.add_argument('--eval_batch_size', type=int, default=128)
+    parser.add_argument('--preprocess_batch_size', type=int, default=128)
+    parser.add_argument('--cache_on_gpu', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--probe_eval_interval', type=int, default=1)
+    parser.add_argument('--seed1', type=int, default=30)
+    parser.add_argument('--seed2', type=int, default=6)
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/media/student1/ExtremePro/rDCM-GEN/data'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026/ASD_CLC/VarCoNet'
-    config['method'] = 'ABIDEI'
-    config['atlas'] = 'SCH'
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['method'] = args.method
+    config['atlas'] = args.atlas
     config['model_config'] = dict(dim_feedforward=1024, layers=1, n_heads=1, max_length=200)
-    config['epochs'] = 50  # Complete all SSL epochs before fitting the probe.
-    config['warm_up_epochs'] = 10
-    config['lr'] = 1.5e-4
-    config['tau'] = 0.054
-    config['batch_size'] = 128
-    config['max_length'] = 200
-    config['min_length'] = 80
+    config['epochs'] = args.epochs  # Complete all SSL epochs before fitting the probe.
+    config['warm_up_epochs'] = args.warm_up_epochs
+    config['lr'] = args.lr
+    config['tau'] = args.tau
+    config['batch_size'] = args.batch_size
+    config['max_length'] = args.max_length
+    config['min_length'] = args.min_length
     config['train_length_limits'] = [config['min_length'], config['max_length']]
-    config['epochs_cls'] = 300  # Retains the original 299 full-batch probe updates.
-    config['lr_cls'] = 1e-4
-    config['num_classes'] = 2
-    config['device'] = 'cuda:3'
-    config['save_results'] = True
-    config['repeats'] = 10
-    config['eval_batch_size'] = 128
-    config['preprocess_batch_size'] = 128
-    config['cache_on_gpu'] = False
-    config['probe_eval_interval'] = 1  # Validate the probe after every probe update.
+    config['epochs_cls'] = args.epochs_cls  # Retains the original 299 full-batch probe updates.
+    config['lr_cls'] = args.lr_cls
+    config['num_classes'] = args.num_classes
+    config['device'] = args.device
+    config['save_results'] = args.save_results
+    config['repeats'] = args.repeats
+    config['eval_batch_size'] = args.eval_batch_size
+    config['preprocess_batch_size'] = args.preprocess_batch_size
+    config['cache_on_gpu'] = args.cache_on_gpu
+    config['probe_eval_interval'] = args.probe_eval_interval  # Validate the probe after every probe update.
     # No encoder eval_interval: the encoder is trained to the final SSL epoch.
-    config['seed1'] = 30
-    config['seed2'] = 6
+    config['seed1'] = args.seed1
+    config['seed2'] = args.seed2
     main(config)

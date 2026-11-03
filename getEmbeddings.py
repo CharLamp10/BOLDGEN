@@ -1,3 +1,6 @@
+"""Extract fixed-dimensional Transformer embeddings for downstream analysis."""
+import argparse
+
 import torch
 import os
 import numpy as np
@@ -131,21 +134,38 @@ def main(config):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Extract fixed-dimensional Transformer embeddings for downstream analysis.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_models', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','rDCM-GEN'])
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--case', type=str, default="full_subsampled")
+    parser.add_argument('--TR', type=float, default=0.72)
+    parser.add_argument('--newTR', type=float, default=2.0)
+    parser.add_argument('--taus', nargs="+", type=float, default=[0.05, 0.1, 0.15])
+    parser.add_argument('--model_num_layers', type=int, default=4)
+    parser.add_argument('--model_num_heads', type=int, default=4)
+    parser.add_argument('--model_dim_feedforward', type=int, default=1024)
+    parser.add_argument('--model_out_dim', type=int, default=4096)
+    parser.add_argument('--model_D', type=int, default=512)
+    parser.add_argument('--device', type=str, default="cuda:0")
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
-    config['path_models'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['methods'] = ['CR-VAE','rDCM-GEN']
-    config['atlas'] = 'SCH'
-    config['case'] = "full_subsampled"
-    config['TR'] = 0.72
-    config['newTR'] = 2.0
-    config['taus'] = [0.05, 0.1, 0.15]
+    config['path_data'] = args.path_data
+    config['path_models'] = args.path_models
+    config['path_save'] = args.path_save
+    config['methods'] = args.methods
+    config['atlas'] = args.atlas
+    config['case'] = args.case
+    config['TR'] = args.TR
+    config['newTR'] = args.newTR
+    config['taus'] = args.taus
     config['model_config'] = {}
-    config['model_config']['num_layers'] = 4
-    config['model_config']['num_heads'] = 4
-    config['model_config']['dim_feedforward'] = 1024
-    config['model_config']['out_dim'] = 4096
-    config['model_config']['D'] = 512
-    config['device'] = "cuda:0"
+    config['model_config']['num_layers'] = args.model_num_layers
+    config['model_config']['num_heads'] = args.model_num_heads
+    config['model_config']['dim_feedforward'] = args.model_dim_feedforward
+    config['model_config']['out_dim'] = args.model_out_dim
+    config['model_config']['D'] = args.model_D
+    config['device'] = args.device
     main(config)

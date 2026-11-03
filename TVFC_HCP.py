@@ -1,3 +1,6 @@
+"""Estimate and compare sliding-window functional brain states on HCP."""
+import argparse
+
 import os
 import torch
 from kmeans_pytorch import kmeans
@@ -314,20 +317,36 @@ def main(config):
 
         
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Estimate and compare sliding-window functional brain states on HCP.')
+    parser.add_argument('--path_data', type=str, required=True)
+    parser.add_argument('--path_save', type=str, required=True)
+    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_crvae', type=str, required=True)
+    parser.add_argument('--path_augmented_timevae', type=str, required=True)
+    parser.add_argument('--path_augmented_timegan', type=str, required=True)
+    parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
+    parser.add_argument('--path_augmented_dsfm', type=str, required=True)
+    parser.add_argument('--atlas', type=str, default='SCH')
+    parser.add_argument('--TR', type=float, default=0.72)
+    parser.add_argument('--newTR', type=float, default=2.0)
+    parser.add_argument('--device', type=str, default="cuda:3")
+    parser.add_argument('--case', type=str, default="full_subsampled")
+    parser.add_argument('--methods', nargs="+", type=str, default=['HCP', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'])
+    args = parser.parse_args()
     config = {}
-    config['path_data'] = r'/home/student1/Desktop/Charalampos_Lamprou/SSL_FC_matrix_GNN_data/HCP_2026'
-    config['path_save'] = r'/home/student1/Desktop/Charalampos_Lamprou/rDCM-GEN_results_HCP_2026'
-    config['path_augmented_rdcmgen'] = r'/media/student1/ExtremePro/rDCM-GEN/rDCM-GEN_results/augmented_rDCM-GEN_noFCloss'
-    config['path_augmented_crvae'] = r'/media/student1/ExtremePro/CR-VAE_augmented'
-    config['path_augmented_timevae'] = r'/media/student1/ExtremePro/TimeVAE_results/outputs/gen_data'
-    config['path_augmented_timegan'] = r'/media/student1/ExtremePro/TimeGAN_results'
-    config['path_augmented_t2idiff'] = r'/media/student1/ExtremePro/T2I-Diff'
-    config['path_augmented_dsfm'] = r'/media/student1/ExtremePro/DSFM_results'
-    config['atlas'] = 'SCH'
-    config['TR'] = 0.72
-    config['newTR'] = 2.0
-    config['device'] = "cuda:3"
-    config['case'] = "full_subsampled"
+    config['path_data'] = args.path_data
+    config['path_save'] = args.path_save
+    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_crvae'] = args.path_augmented_crvae
+    config['path_augmented_timevae'] = args.path_augmented_timevae
+    config['path_augmented_timegan'] = args.path_augmented_timegan
+    config['path_augmented_t2idiff'] = args.path_augmented_t2idiff
+    config['path_augmented_dsfm'] = args.path_augmented_dsfm
+    config['atlas'] = args.atlas
+    config['TR'] = args.TR
+    config['newTR'] = args.newTR
+    config['device'] = args.device
+    config['case'] = args.case
     if config['case'] == "full_original" or config['case'] == "half_original":
         config['wind'] = 62
     elif config['case'] == "full_subsampled" or config['case'] == "half_subsampled":
@@ -340,6 +359,6 @@ if __name__ == '__main__':
         config['subjects'] = 100
     elif config['case'] == "half_subsampled":
         config['subjects'] = 145
-    config['methods'] = ['HCP', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM']
+    config['methods'] = args.methods
     results = main(config)   
     

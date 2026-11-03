@@ -1,3 +1,5 @@
+# Visualize ReX individual variation fields for contrastive embeddings.
+
 library(data.table)
 library(ReX)
 library(ggplot2)

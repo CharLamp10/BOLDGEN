@@ -1,3 +1,5 @@
+"""Generate subject-specific rs-fMRI augmentations using the CR-VAE baseline."""
+
 import os
 import torch
 import numpy as np
@@ -60,9 +62,9 @@ def main(config):
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Run')
    parser.add_argument('--path_crvae', type=str, 
-                       default=r'/media/student1/ExtremePro/CR-VAE_models')
+                       required=True)
    parser.add_argument('--path_save', type=str,
-                       default=r'/media/student1/ExtremePro/CR-VAE_augmented')
+                       required=True)
    parser.add_argument('--start', type=int, default=0)
    parser.add_argument('--finish', type=int, default=1000)
    parser.add_argument('--case', type=str, default="ABIDEI")
