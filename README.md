@@ -1,6 +1,6 @@
 <div align="center">
 
-# rDCM-GEN
+# BOLDGEN
 
 **Biophysically grounded, subject-specific generation and augmentation of resting-state fMRI time series**
 
@@ -11,7 +11,7 @@
 
 ## Overview
 
-rDCM-GEN combines regression Dynamic Causal Modeling (rDCM) with differentiable estimation of endogenous neural fluctuations to generate alternative BOLD time-series realizations for an individual. Unlike models trained to sample from a population-wide distribution, the approach conditions each generation on estimates derived from an observed rs-fMRI time series.
+BOLDGEN combines regression Dynamic Causal Modeling (rDCM) with differentiable estimation of endogenous neural fluctuations to generate alternative BOLD time-series realizations for an individual. Unlike models trained to sample from a population-wide distribution, the approach conditions each generation on estimates derived from an observed rs-fMRI time series.
 
 The workflow has two principal modules:
 
@@ -20,18 +20,18 @@ The workflow has two principal modules:
 
 ### Module 1 — Estimate EC and endogenous neural fluctuations
 
-![rDCM-GEN Module 1: rDCM and differentiable neural fluctuation estimation](paper_plots/rDCM-GEN_module1.png)
+![BOLDGEN Module 1: rDCM and differentiable neural fluctuation estimation](paper_plots/BOLDGEN_module1.png)
 
 ### Module 2 — Generate subject-specific rs-fMRI time series
 
-![rDCM-GEN Module 2: biophysically informed generation](paper_plots/rDCM-GEN_module2.png)
+![BOLDGEN Module 2: biophysically informed generation](paper_plots/BOLDGEN_module2.png)
 
 ## Repository guide
 
 | Files | Purpose |
 | --- | --- |
-| `rDCM_GEN_module1_HCP.py`, `rDCM_GEN_module1_ABIDE.py` | Module 1 estimation on HCP and ABIDE data. |
-| `rDCM_GEN_module2_HCP.py`, `rDCM_GEN_module2_ABIDE.py` | Module 2 generation of augmented time series. |
+| `BOLDGEN_module1_HCP.py`, `BOLDGEN_module1_ABIDE.py` | Module 1 estimation on HCP and ABIDE data. |
+| `BOLDGEN_module2_HCP.py`, `BOLDGEN_module2_ABIDE.py` | Module 2 generation of augmented time series. |
 | `rdcm.py`, `reverse_dcm.py`, `utils.py`, `utils1.py` | rDCM, forward-model, and supporting numerical utilities. |
 | `dcm_euler_integration_extension.cpp` | C++ / PyTorch extension for Euler integration. |
 | `contrastive_learning_experiment.py`, `gender_classification.py`, `prepare_for_rex.py` | Contrastive pretraining, linear downstream classification, and ReX preparation. |
@@ -66,13 +66,13 @@ For scripts with command-line entry points, run `python SCRIPT.py --help` to ins
 
 ```bash
 # HCP estimation (Module 1)
-python rDCM_GEN_module1_HCP.py \
+python BOLDGEN_module1_HCP.py \
   --data_path /path/to/HCP_data \
   --save_path /path/to/results \
   --case full_subsampled
 
 # HCP generation (Module 2)
-python rDCM_GEN_module2_HCP.py \
+python BOLDGEN_module2_HCP.py \
   --data_path /path/to/HCP_data \
   --save_path /path/to/results \
   --case full_subsampled
@@ -81,7 +81,7 @@ python rDCM_GEN_module2_HCP.py \
 python TVFC_HCP.py \
   --path_data /path/to/HCP_data \
   --path_save /path/to/results \
-  --path_augmented_rdcmgen /path/to/rDCM-GEN_augmented \
+  --path_augmented_boldgen /path/to/BOLDGEN_augmented \
   --path_augmented_crvae /path/to/CR-VAE_augmented \
   --path_augmented_timevae /path/to/TimeVAE_generated \
   --path_augmented_timegan /path/to/TimeGAN_generated \
@@ -104,7 +104,7 @@ Repeat experiments with other HCP configurations as required: `full_original`, `
 
 ## Citation
 
-If you use this repository, please cite the accompanying rDCM-GEN manuscript when its bibliographic information becomes available, and cite the original rDCM and dataset publications as appropriate.
+If you use this repository, please cite the accompanying BOLDGEN manuscript when its bibliographic information becomes available, and cite the original rDCM and dataset publications as appropriate.
 
 ## License
 
