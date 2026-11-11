@@ -51,7 +51,7 @@ def main(config):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Export subject-level contrastive embeddings to ReX-compatible CSV files.')
     parser.add_argument('--path', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','rDCM-GEN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','BOLDGEN'])
     parser.add_argument('--taus', nargs="+", type=float, default=[0.05, 0.1, 0.15])
     parser.add_argument('--case', type=str, default="full_subsampled")
     args = parser.parse_args()

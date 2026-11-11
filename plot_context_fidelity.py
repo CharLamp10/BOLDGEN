@@ -24,10 +24,10 @@ SETTINGS = [
     ('half_subsampled', '7 min\nTR = 2.0 s'),
     ('ABIDEI', 'ABIDE I'),
 ]
-METHODS = ['TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM', 'CR-VAE', 'rDCM-GEN']
+METHODS = ['TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM', 'CR-VAE', 'BOLDGEN']
 COLORS = {
     'TimeVAE': '#718096', 'TimeGAN': '#8C6BB1', 'T2I-Diff': '#D59443',
-    'DSFM': '#7CA35A', 'CR-VAE': '#C46763', 'rDCM-GEN': '#167B84',
+    'DSFM': '#7CA35A', 'CR-VAE': '#C46763', 'BOLDGEN': '#167B84',
 }
 FOLDER_NAMES = {method: method for method in METHODS}
 

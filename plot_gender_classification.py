@@ -1,7 +1,7 @@
 """Plot gender SimCLR AUC and F1 with uncorrected paired t-test annotations.
 
 Pairing is by the position of each score in the concatenated, sorted file order.
-This is valid only if CR-VAE and rDCM-GEN use matching seeds/splits and run order.
+This is valid only if CR-VAE and BOLDGEN use matching seeds/splits and run order.
 """
 import argparse
 import csv
@@ -21,7 +21,7 @@ SETTINGS = [
     ('half_subsampled', '7 min, TR = 2.0 s'),
 ]
 TAUS = [('tau_0.05', .05), ('tau_0.1', .1), ('tau_0.15', .15)]
-METHODS = ['CR-VAE', 'rDCM-GEN']
+METHODS = ['CR-VAE', 'BOLDGEN']
 COLORS = ['#D18A45', '#167B84']
 METRICS = [('AUC', 'best_test_auc'), ('F1', 'best_test_f1')]
 
@@ -81,10 +81,10 @@ def paired_tests(data):
         for _, tau in TAUS:
             for metric, _ in METRICS:
                 a = data[folder, tau, 'CR-VAE', metric]
-                b = data[folder, tau, 'rDCM-GEN', metric]
+                b = data[folder, tau, 'BOLDGEN', metric]
                 if len(a) != len(b):
                     raise ValueError(f'Cannot pair {folder} tau={tau} {metric}: '
-                                     f'CR-VAE has {len(a)} scores, rDCM-GEN has {len(b)}. '
+                                     f'CR-VAE has {len(a)} scores, BOLDGEN has {len(b)}. '
                                      'Align matching runs before testing.')
                 n = len(a)
                 difference = a - b
@@ -96,7 +96,7 @@ def paired_tests(data):
                     res = ttest_rel(a, b, alternative='two-sided')
                     t, p, status = float(res.statistic), float(res.pvalue), 'ok'
                 row = dict(setting=folder, tau=tau, metric=metric,
-                           method_a='CR-VAE', method_b='rDCM-GEN', n_pairs=n,
+                           method_a='CR-VAE', method_b='BOLDGEN', n_pairs=n,
                            mean_difference_pp=float(difference.mean()),
                            t_stat=t, p_raw=p, significance=significance(p), status=status)
                 rows.append(row)
@@ -131,7 +131,7 @@ def plot(data, tests, output_dir, prefix='gender_simclr', dpi=600, show_ns=False
                     ax.bar(x + (j - .5) * width, means, width * .94,
                            yerr=sds, capsize=5, color=COLORS[j], edgecolor='white',
                            linewidth=.8, error_kw={'elinewidth': 1.5, 'capthick': 1.5},
-                           label='CR-VAE' if j == 0 else 'rDCM-GEN')
+                           label='CR-VAE' if j == 0 else 'BOLDGEN')
 
                 # Brackets for the paired comparisons, one per temperature.
                 occupied_top = max(float(np.max(means_by_method[j] + sds_by_method[j]))
@@ -177,11 +177,11 @@ def main():
     parser.add_argument('--parent_path', required=True)
     parser.add_argument('--output-dir', required=True)
     parser.add_argument('--crvae-pattern', default='results_CR-VAE*.pkl')
-    parser.add_argument('--rdcm-pattern', default='results_rDCM-GEN*.pkl')
+    parser.add_argument('--boldgen-pattern', default='results_BOLDGEN*.pkl')
     parser.add_argument('--show-ns', action='store_true', help='Annotate nonsignificant/undefined comparisons too')
     parser.add_argument('--dpi', type=int, default=600)
     args = parser.parse_args()
-    data = load(args.parent_path, {'CR-VAE': args.crvae_pattern, 'rDCM-GEN': args.rdcm_pattern})
+    data = load(args.parent_path, {'CR-VAE': args.crvae_pattern, 'BOLDGEN': args.boldgen_pattern})
     tests = paired_tests(data)
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)

@@ -246,7 +246,7 @@ def main(config):
                 
     
     T,R = train_data[0].shape
-    if not os.path.exists(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'fmris.pt')):
+    if not os.path.exists(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'fmris.pt')):
         path = os.path.join(config['save_path'],'neural_noise', config['case'])
         dire = os.listdir(path)
         neural_noises = torch.zeros(len(names_new),T*16,R)
@@ -256,10 +256,10 @@ def main(config):
         decays = torch.zeros(len(names_new),R,1)
         epsilons =  torch.zeros(len(names_new))
         fmris = torch.zeros(len(names_new),T,R)
-        names_rDCM_GEN = []
+        names_BOLDGEN = []
         for temp in names_new:
-            names_rDCM_GEN.append(temp)
-        names_rDCM_GEN = np.array(names_rDCM_GEN, dtype=str)
+            names_BOLDGEN.append(temp)
+        names_BOLDGEN = np.array(names_BOLDGEN, dtype=str)
         for i,file in enumerate(dire):
             try:
                 with open(os.path.join(path, file), 'rb') as f:
@@ -268,7 +268,7 @@ def main(config):
                 if file[:-4] in names_new:
                     try:
                         fmris[i] = train_data[pos[0][0]]
-                        names_rDCM_GEN[i] = np.array(names_new)[pos[0][0]]
+                        names_BOLDGEN[i] = np.array(names_new)[pos[0][0]]
                         neural_noises[i] = data['neural_noises'][-1]
                         As[i] = data['outputs'][-1][0]['Ep']['A']
                         betas[i] = data['betas'][-1]
@@ -290,34 +290,34 @@ def main(config):
         decays = decays[mask]
         epsilons = epsilons[mask]
         fmris = fmris[mask]
-        names_rDCM_GEN = names_rDCM_GEN[mask]
-        names_rDCM_GEN = names_rDCM_GEN.tolist()
+        names_BOLDGEN = names_BOLDGEN[mask]
+        names_BOLDGEN = names_BOLDGEN.tolist()
         
     
-        os.makedirs(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case']), exist_ok=True)
-        torch.save(neural_noises, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'neural_noises.pt'))
-        torch.save(As, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'As.pt'))
-        torch.save(betas, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'betas.pt'))
-        torch.save(transits, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'transits.pt'))
-        torch.save(decays, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'decays.pt'))
-        torch.save(epsilons, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'epsilons.pt'))
-        torch.save(fmris, os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'fmris.pt'))
-        with open(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'],'names_rDCM-GEN.txt'), 'w') as f:
-            for item in names_rDCM_GEN:
+        os.makedirs(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case']), exist_ok=True)
+        torch.save(neural_noises, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'neural_noises.pt'))
+        torch.save(As, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'As.pt'))
+        torch.save(betas, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'betas.pt'))
+        torch.save(transits, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'transits.pt'))
+        torch.save(decays, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'decays.pt'))
+        torch.save(epsilons, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'epsilons.pt'))
+        torch.save(fmris, os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'fmris.pt'))
+        with open(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'],'names_BOLDGEN.txt'), 'w') as f:
+            for item in names_BOLDGEN:
                 f.write("%s\n" % item)
     else:
-        neural_noises = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'neural_noises.pt'))
-        As = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'As.pt'))
-        betas = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'betas.pt'))
-        transits = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'transits.pt'))
-        decays = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'decays.pt'))
-        epsilons = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'epsilons.pt'))
-        fmris = torch.load(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'], 'fmris.pt'))
-        names_rDCM_GEN = []
-        with open(os.path.join(config['save_path'], 'rDCM-GEN_Module1_results_gathered', config['case'],'names_rDCM-GEN.txt'), 'r') as f:
+        neural_noises = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'neural_noises.pt'))
+        As = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'As.pt'))
+        betas = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'betas.pt'))
+        transits = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'transits.pt'))
+        decays = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'decays.pt'))
+        epsilons = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'epsilons.pt'))
+        fmris = torch.load(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'], 'fmris.pt'))
+        names_BOLDGEN = []
+        with open(os.path.join(config['save_path'], 'BOLDGEN_Module1_results_gathered', config['case'],'names_BOLDGEN.txt'), 'r') as f:
             for line in f:
                 temp = line.strip()
-                names_rDCM_GEN.append(temp)
+                names_BOLDGEN.append(temp)
         
     neural_noises = neural_noises[config['start']:config['finish']]
     As = As[config['start']:config['finish']]
@@ -326,11 +326,11 @@ def main(config):
     decays = decays[config['start']:config['finish']]
     epsilons = epsilons[config['start']:config['finish']]
     fmris = fmris[config['start']:config['finish']]
-    names_rDCM_GEN = names_rDCM_GEN[config['start']:config['finish']]
+    names_BOLDGEN = names_BOLDGEN[config['start']:config['finish']]
     
     epochs = config['epochs']
-    for i, (y, neural_noise, A, beta, transit, decay, epsilon, name) in enumerate(zip(fmris, neural_noises, As, betas, transits, decays, epsilons, names_rDCM_GEN)):
-        if not os.path.exists(os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['case'], name + '.pt')):
+    for i, (y, neural_noise, A, beta, transit, decay, epsilon, name) in enumerate(zip(fmris, neural_noises, As, betas, transits, decays, epsilons, names_BOLDGEN)):
+        if not os.path.exists(os.path.join(config['save_path'], 'augmented_BOLDGEN_noFCloss', config['case'], name + '.pt')):
             T,R = y.shape
             _,x = rDCM_generate(T,
                                 R,
@@ -373,8 +373,8 @@ def main(config):
                     if loss.item() < min_loss:
                         min_loss = loss.item()
                         y_gen_best = y_gen.detach().cpu()
-            os.makedirs(os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['case']), exist_ok=True)
-            torch.save(y_gen_best, os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['case'], name + '.pt'))
+            os.makedirs(os.path.join(config['save_path'], 'augmented_BOLDGEN_noFCloss', config['case']), exist_ok=True)
+            torch.save(y_gen_best, os.path.join(config['save_path'], 'augmented_BOLDGEN_noFCloss', config['case'], name + '.pt'))
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run')

@@ -33,9 +33,9 @@ def load_training_data(config, method):
         root = config["path_data"]
         return load_pair(os.path.join(root, "ABIDEI_ASD_nilearn.npy"),
                          os.path.join(root, "ABIDEI_NC_nilearn.npy"))
-    if method in ("CR-VAE", "rDCM-GEN"):
+    if method in ("CR-VAE", "BOLDGEN"):
         key, tag = (("path_augmented_crvae", "CR-VAE") if method =="CR-VAE"
-                    else ("path_augmented_rdcmgen", "rDCM-GEN"))
+                    else ("path_augmented_boldgen", "BOLDGEN"))
         root = config[key]
         signals = torch.load(os.path.join(root, f"augmented_{tag}_orig_ABIDEI.pt"),
                              map_location="cpu", weights_only=True)
@@ -337,13 +337,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train and evaluate the BolT Transformer for cross-dataset ASD classification.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--path_augmented_timevae', type=str, required=True)
     parser.add_argument('--path_augmented_timegan', type=str, required=True)
     parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
     parser.add_argument('--path_augmented_dsfm', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['ABIDEI', 'DSFM', 'T2I-Diff', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['ABIDEI', 'DSFM', 'T2I-Diff', 'BOLDGEN', 'CR-VAE', 'TimeVAE', 'TimeGAN'])
     parser.add_argument('--atlas', type=str, default='SCH')
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--num_classes', type=int, default=2)
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['path_augmented_timevae'] = args.path_augmented_timevae
     config['path_augmented_timegan'] = args.path_augmented_timegan

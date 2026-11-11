@@ -102,7 +102,7 @@ def main(config):
     train_data = preprocess_HCP(train_data[:config['subjects']], config['case'])
 
     augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
-    augmented_rdcmgen = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    augmented_boldgen = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_' + config['case'] + '.pt'))
     augmented_timevae = np.load(os.path.join(config['path_augmented_timevae'], config['case'], 'timeVAE_' + config['case'] + '_prior_samples.npy'))
     augmented_timegan = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
     augmented_t2idiff = np.load(os.path.join(config['path_augmented_t2idiff'], config['case'], 'gen_sig_' + config['case'] + '_fold1.npy'))
@@ -110,8 +110,8 @@ def main(config):
         
     
     T,R = train_data[0].shape            
-    data_rdcmgen = augmented_rdcmgen[:config['subjects']]
-    data_rdcmgen = data_rdcmgen[:,0,:,:]
+    data_boldgen = augmented_boldgen[:config['subjects']]
+    data_boldgen = data_boldgen[:,0,:,:]
     data_crvae = augmented_crvae[:config['subjects']]
     data_crvae = data_crvae[:,0,:,:]
     data_timegan = torch.from_numpy(augmented_timegan[:config['subjects']])
@@ -287,9 +287,9 @@ def main(config):
             plt.savefig(os.path.join("plots","TVFC", config['case'], "DSFM_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
-    if 'rDCM-GEN' in config['methods']:
+    if 'BOLDGEN' in config['methods']:
         x_all = []
-        for dat in data_rdcmgen:
+        for dat in data_boldgen:
             for i in range(T - config['wind'] + 1):
                 x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
@@ -310,7 +310,7 @@ def main(config):
             plt.xticks([])
             plt.yticks([])
             os.makedirs(os.path.join('plots', 'TVFC', config['case']), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", config['case'], "rDCM-GEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            plt.savefig(os.path.join("plots","TVFC", config['case'], "BOLDGEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
 
 
@@ -320,7 +320,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Estimate and compare sliding-window functional brain states on HCP.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--path_augmented_timevae', type=str, required=True)
     parser.add_argument('--path_augmented_timegan', type=str, required=True)
@@ -331,12 +331,12 @@ if __name__ == '__main__':
     parser.add_argument('--newTR', type=float, default=2.0)
     parser.add_argument('--device', type=str, default="cuda:3")
     parser.add_argument('--case', type=str, default="full_subsampled")
-    parser.add_argument('--methods', nargs="+", type=str, default=['HCP', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['HCP', 'BOLDGEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'])
     args = parser.parse_args()
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['path_augmented_timevae'] = args.path_augmented_timevae
     config['path_augmented_timegan'] = args.path_augmented_timegan

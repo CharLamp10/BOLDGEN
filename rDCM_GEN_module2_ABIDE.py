@@ -187,7 +187,7 @@ def main(config):
     neural_noise_dir = neural_noise_dir[config['start']:config['finish']]       
     epochs = config['epochs']
     for i, name in enumerate(neural_noise_dir):
-        if not os.path.exists(os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['dataset'], name + '.pt')):
+        if not os.path.exists(os.path.join(config['save_path'], 'augmented_BOLDGEN_noFCloss', config['dataset'], name + '.pt')):
             pos = np.where(np.array(data_dir) == name[:-4])[0][0]
             y = np.load(os.path.join(data_path, data_dir[pos], 'ROISignals.npy'))
             y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
@@ -242,8 +242,8 @@ def main(config):
                     if loss.item() < min_loss:
                         min_loss = loss.item()
                         y_gen_best = y_gen.detach().cpu()
-            os.makedirs(os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['dataset']), exist_ok=True)
-            torch.save(y_gen_best, os.path.join(config['save_path'], 'augmented_rDCM-GEN_noFCloss', config['dataset'], name + '.pt'))
+            os.makedirs(os.path.join(config['save_path'], 'augmented_BOLDGEN_noFCloss', config['dataset']), exist_ok=True)
+            torch.save(y_gen_best, os.path.join(config['save_path'], 'augmented_BOLDGEN_noFCloss', config['dataset'], name + '.pt'))
 
 
 if __name__ == '__main__':

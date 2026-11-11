@@ -22,15 +22,6 @@ def load_pair(asd_path, control_path, config):
     control = np.load(control_path)
     signals = np.concatenate((asd, control), axis=0)
     labels = torch.cat((torch.ones(len(asd), 1), torch.zeros(len(control), 1)))
-    if 'ABIDEII' not in asd_path:
-        signals2 = torch.load(
-            os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_ABIDEI.pt'),
-            map_location='cpu', weights_only=True)
-        labels2 = torch.load(
-            os.path.join(config['path_augmented_rdcmgen'], 'labels_augmented_rDCM-GEN_ABIDEI.pt'),
-            map_location='cpu', weights_only=True)
-        signals = np.concatenate((signals, signals2[:, 13, :, :].numpy()), axis=0)
-        labels = torch.cat((labels, labels2.reshape(-1, 1)), dim=0)
     return signals, labels
 
 
@@ -414,7 +405,7 @@ def main(config):
     roi_num = eval_data.shape[-1]
 
     # Fixed probe dataset for every method. load_pair retains the supplied
-    # addition of rDCM-GEN variant 13 to the original ABIDEI signals.
+    # addition of BOLDGEN variant 13 to the original ABIDEI signals.
     probe_data, probe_labels = load_pair(
         os.path.join(config['path_data'], 'ABIDEI_ASD_nilearn.npy'),
         os.path.join(config['path_data'], 'ABIDEI_NC_nilearn.npy'), config)
@@ -435,7 +426,7 @@ def main(config):
         raise ValueError('Training ROI count or sequence length is incompatible with the model')
     train_data, lengths = prepare_signals(
         train_data, device, config['preprocess_batch_size'],
-        standardize=method in {'TimeVAE', 'TimeGAN', 'T2IDIFF', 'DSFM'},
+        standardize=method in {'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'},
         min_crop=low if subject_shape is None else None)
     train_data, labels, lengths = (t.to(cache_device) for t in (train_data, labels, lengths))
     if subject_shape is not None:

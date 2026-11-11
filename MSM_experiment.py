@@ -380,8 +380,8 @@ def main(config):
             train_data = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
             train_data = train_data.view(-1, train_data.shape[2], train_data.shape[3])
             train_data = train_data.permute(0,2,1)
-        elif method == "rDCM-GEN":
-            train_data = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+        elif method == "BOLDGEN":
+            train_data = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_' + config['case'] + '.pt'))
             train_data = train_data.view(-1, train_data.shape[2], train_data.shape[3])
             train_data = train_data.permute(0,2,1)
         elif method == "TimeVAE":
@@ -547,13 +547,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train and evaluate Transformer masked sequence modeling on augmented HCP data.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--path_augmented_timevae', type=str, required=True)
     parser.add_argument('--path_augmented_timegan', type=str, required=True)
     parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
     parser.add_argument('--path_augmented_dsfm', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['HCP', 'TimeVAE', 'TimeGAN','CR-VAE','T2I-Diff', 'DSFM','rDCM-GEN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['HCP', 'TimeVAE', 'TimeGAN','CR-VAE','T2I-Diff', 'DSFM','BOLDGEN'])
     parser.add_argument('--case', type=str, default="full_subsampled")
     parser.add_argument('--TR', type=float, default=0.72)
     parser.add_argument('--newTR', type=float, default=2.0)
@@ -576,7 +576,7 @@ if __name__ == '__main__':
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['path_augmented_timevae'] = args.path_augmented_timevae
     config['path_augmented_timegan'] = args.path_augmented_timegan

@@ -138,7 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_models', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','rDCM-GEN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','BOLDGEN'])
     parser.add_argument('--atlas', type=str, default='SCH')
     parser.add_argument('--case', type=str, default="full_subsampled")
     parser.add_argument('--TR', type=float, default=0.72)

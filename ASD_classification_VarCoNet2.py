@@ -34,9 +34,9 @@ def _load_training_data(config, method):
         root = config["path_data"]
         return load_pair(os.path.join(root, "ABIDEI_ASD_nilearn.npy"),
                          os.path.join(root, "ABIDEI_NC_nilearn.npy"))
-    if method in ("CRVAE", "rDCM-GEN"):
+    if method in ("CRVAE", "BOLDGEN"):
         key, tag = (("path_augmented_crvae", "CR-VAE") if method == "CRVAE"
-                    else ("path_augmented_rdcmgen", "rDCM-GEN"))
+                    else ("path_augmented_boldgen", "BOLDGEN"))
         root = config[key]
         signals = torch.load(os.path.join(root, f"augmented_{tag}_orig_ABIDEI.pt"),
                              map_location="cpu", weights_only=True)
@@ -51,23 +51,6 @@ def _load_training_data(config, method):
             raise ValueError(f"{method}: expected one label per subject (N)")
         return (signals.reshape(N * B, T, R),
                 labels.repeat_interleave(B).reshape(-1, 1), (N, B))
-    if method == "TimeVAE":
-        root = config["path_augmented_timevae"]
-        return load_pair(
-            os.path.join(root, "ABIDEI_ASD", "timeVAE_ABIDEI_ASD_prior_samples.npy"),
-            os.path.join(root, "ABIDEI_NC", "timeVAE_ABIDEI_NC_prior_samples.npy"))
-    if method == "TimeGAN":
-        root = config["path_augmented_timegan"]
-        return load_pair(os.path.join(root, "augmented_TimeGAN_ABIDEI_ASD.npy"),
-                         os.path.join(root, "augmented_TimeGAN_ABIDEI_NC.npy"))
-    if method == "T2IDIFF":
-        root = os.path.join(config["path_augmented_t2idiff"], "ABIDEI")
-        return (np.load(os.path.join(root, "gen_sig_ABIDEI_fold1.npy")),
-                np.load(os.path.join(root, "gen_label_sig_ABIDEI_fold1.npy")))
-    if method == "DSFM":
-        root = os.path.join(config["path_augmented_dsfm"], "ABIDEI", "samples")
-        return load_pair(os.path.join(root, "asd_bold.npy"),
-                         os.path.join(root, "control_bold.npy"))
     raise ValueError(f"Unknown method: {method}")
 
 
@@ -923,7 +906,7 @@ def main(config):
         if method == "CR-VAE":
             config['probe_bank_root'] = config['path_augmented_crvae']
         else:
-            config['probe_bank_root'] = config['path_augmented_rdcmgen']
+            config['probe_bank_root'] = config['path_augmented_boldgen']
         config['probe_candidates_file'] = 'augmented_' + method + '_ABIDEI.pt'
         config['probe_labels_file'] = 'labels_augmented_' + method + '_ABIDEI.pt'
         train_data, labels, subject_shape = load_training_data(config, method)
@@ -932,7 +915,7 @@ def main(config):
             raise ValueError('Training ROI count or sequence length is incompatible')
         train_data, lengths = prepare_signals(
             train_data, device, config['preprocess_batch_size'],
-            standardize=method in {'TimeVAE', 'TimeGAN', 'T2IDIFF', 'DSFM'},
+            standardize=False,
             min_crop=low if subject_shape is None else None)
         train_data, labels, lengths = (t.to(cache_device) for t in (train_data, labels, lengths))
         if subject_shape is not None:
@@ -1059,9 +1042,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train and evaluate VarCoNet with subject-specific synthetic augmentation.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE', 'rDCM-GEN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE', 'BOLDGEN'])
     parser.add_argument('--model_dim_feedforward', type=int, default=1024)
     parser.add_argument('--model_layers', type=int, default=1)
     parser.add_argument('--model_n_heads', type=int, default=1)
@@ -1104,7 +1087,7 @@ if __name__ == "__main__":
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['methods'] = args.methods 
     config['model_config'] = {}

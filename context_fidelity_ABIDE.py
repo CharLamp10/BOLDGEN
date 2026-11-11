@@ -28,8 +28,8 @@ def main(config):
             test_gen = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_ABIDEI.pt'))
             test_gen = test_gen.view(-1, test_gen.shape[2], test_gen.shape[3])
             test_gen = test_gen.numpy()
-        elif method == "rDCM-GEN":
-            test_gen = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_ABIDEI.pt'))
+        elif method == "BOLDGEN":
+            test_gen = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_ABIDEI.pt'))
             test_gen = test_gen.view(-1, test_gen.shape[2], test_gen.shape[3])
             test_gen = test_gen.numpy()
         elif method == "TimeVAE":
@@ -82,13 +82,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute Context-FID between empirical and generated ABIDE time series.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--path_augmented_timevae', type=str, required=True)
     parser.add_argument('--path_augmented_timegan', type=str, required=True)
     parser.add_argument('--path_augmented_t2idiff', type=str, required=True)
     parser.add_argument('--path_augmented_dsfm', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE', 'TimeVAE', 'TimeGAN','T2I-Diff','DSFM','rDCM-GEN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE', 'TimeVAE', 'TimeGAN','T2I-Diff','DSFM','BOLDGEN'])
     parser.add_argument('--TR', type=float, default=0.72)
     parser.add_argument('--newTR', type=float, default=2.0)
     parser.add_argument('--R', type=int, default=100)
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['path_augmented_timevae'] = args.path_augmented_timevae
     config['path_augmented_timegan'] = args.path_augmented_timegan

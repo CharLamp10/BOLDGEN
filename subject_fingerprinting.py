@@ -44,11 +44,11 @@ def main(config):
     for key in data:
         train_data.append(data[key][186:-187])
         
-    names_rdcmgen = []
-    with open(os.path.join(config['path_augmented_rdcm'],'names_rDCM-GEN_' + config['case'] + '.txt'), 'r') as f:
+    names_boldgen = []
+    with open(os.path.join(config['path_augmented_boldgen'],'names_BOLDGEN_' + config['case'] + '.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names_rdcmgen.append(temp)
+            names_boldgen.append(temp)
             
     names_crvae = []
     with open(os.path.join(config['path_augmented_crvae'],'names_CR-VAE_' + config['case'] + '.txt'), 'r') as f:
@@ -56,15 +56,15 @@ def main(config):
             temp = line.strip()
             names_crvae.append(temp)
             
-    augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    augmented_boldgen = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_' + config['case'] + '.pt'))
     augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
     
     names_SF = []
     for name in names:
-        if name in names_rdcmgen and name in names_crvae and 'REST1_LR' in name:
+        if name in names_boldgen and name in names_crvae and 'REST1_LR' in name:
             name2 = name
             name2 = name2.replace('REST1_LR', 'REST2_LR')
-            if name2 in names and name2 in names_rdcmgen and name2 in names_crvae:
+            if name2 in names and name2 in names_boldgen and name2 in names_crvae:
                 names_SF.append(name[:6])
     
     names_SF = names_SF[:128]
@@ -75,8 +75,8 @@ def main(config):
         
     data1 = []
     data2 = []
-    data1_rDCM = []
-    data2_rDCM = []
+    data1_BOLDGEN = []
+    data2_BOLDGEN = []
     data1_CRVAE = []
     data2_CRVAE = []
     for name in names_SF:
@@ -88,16 +88,16 @@ def main(config):
                 data2.append(train_data[p])
                 
                 
-    ids = names_rdcmgen.copy()
+    ids = names_boldgen.copy()
     for i,idd in enumerate(ids):
         ids[i] = idd[:6]
     for name in names_SF:
         pos = np.where(np.array(ids) == name)[0]
         for p in pos:
-            if "REST1_LR" in names_rdcmgen[p]:
-                data1_rDCM.append(augmented_rdcm[p])
-            elif "REST2_LR" in names_rdcmgen[p]:
-                data2_rDCM.append(augmented_rdcm[p])
+            if "REST1_LR" in names_boldgen[p]:
+                data1_BOLDGEN.append(augmented_boldgen[p])
+            elif "REST2_LR" in names_boldgen[p]:
+                data2_BOLDGEN.append(augmented_boldgen[p])
                 
     ids = names_crvae.copy()
     for i,idd in enumerate(ids):
@@ -116,11 +116,11 @@ def main(config):
     data2 = (data2 - torch.mean(data2, dim=1, keepdim=True))/torch.std(data2, dim=1, keepdim=True)
     
     accuracies = []
-    accuracies_rdcm = []
+    accuracies_boldgen = []
     accuracies_crvae = []
     for j in range(15):
-        data1_rDCM_j = torch.stack(data1_rDCM)[:,j,:,:]
-        data2_rDCM_j = torch.stack(data2_rDCM)[:,j,:,:]
+        data1_BOLDGEN_j = torch.stack(data1_BOLDGEN)[:,j,:,:]
+        data2_BOLDGEN_j = torch.stack(data2_BOLDGEN)[:,j,:,:]
         data1_CRVAE_j = torch.stack(data1_CRVAE)[:,j,:,:]
         data2_CRVAE_j = torch.stack(data2_CRVAE)[:,j,:,:]
 
@@ -128,20 +128,20 @@ def main(config):
         R = 100
         FC_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
         FC_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
-        FC_rdcm_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
-        FC_rdcm_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
+        FC_boldgen_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
+        FC_boldgen_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
         FC_crvae_test1 = torch.zeros(data1.shape[0], R*(R-1)//2)
         FC_crvae_test2 = torch.zeros(data1.shape[0], R*(R-1)//2)
         triu_indices = torch.triu_indices(R, R, offset=1)
-        for i, (y1, y2, y1_rdcm, y2_rdcm, y1_crvae, y2_crvae) in enumerate(zip(data1, data2, data1_rDCM_j, data2_rDCM_j, data1_CRVAE_j, data2_CRVAE_j)):
+        for i, (y1, y2, y1_boldgen, y2_boldgen, y1_crvae, y2_crvae) in enumerate(zip(data1, data2, data1_BOLDGEN_j, data2_BOLDGEN_j, data1_CRVAE_j, data2_CRVAE_j)):
             FC1 = torch.corrcoef(y1.T)
             FC_test1[i] = FC1[triu_indices[0], triu_indices[1]]
             FC2 = torch.corrcoef(y2.T)
             FC_test2[i] = FC2[triu_indices[0], triu_indices[1]]
-            FC1_gen = torch.corrcoef(y1_rdcm.T)
-            FC_rdcm_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
-            FC2_gen = torch.corrcoef(y2_rdcm.T)
-            FC_rdcm_test2[i] = FC2_gen[triu_indices[0], triu_indices[1]]
+            FC1_gen = torch.corrcoef(y1_boldgen.T)
+            FC_boldgen_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
+            FC2_gen = torch.corrcoef(y2_boldgen.T)
+            FC_boldgen_test2[i] = FC2_gen[triu_indices[0], triu_indices[1]]
             FC1_gen = torch.corrcoef(y1_crvae.T)
             FC_crvae_test1[i] = FC1_gen[triu_indices[0], triu_indices[1]]
             FC2_gen = torch.corrcoef(y2_crvae.T)
@@ -149,21 +149,21 @@ def main(config):
             
         accuracy = fingerprinting(FC_test1, FC_test2)
             
-        accuracy_rdcm_1 = fingerprinting(FC_test1, FC_rdcm_test2)
-        accuracy_rdcm_2 = fingerprinting(FC_rdcm_test1, FC_test2)
-        accuracy_rdcm_both = (accuracy_rdcm_1 + accuracy_rdcm_2)/2
+        accuracy_boldgen_1 = fingerprinting(FC_test1, FC_boldgen_test2)
+        accuracy_boldgen_2 = fingerprinting(FC_boldgen_test1, FC_test2)
+        accuracy_boldgen_both = (accuracy_boldgen_1 + accuracy_boldgen_2)/2
         
         accuracy_crvae_1 = fingerprinting(FC_test1, FC_crvae_test2)
         accuracy_crvae_2 = fingerprinting(FC_crvae_test1, FC_test2)
         accuracy_crvae_both = (accuracy_crvae_1 + accuracy_crvae_2)/2
         
         accuracies.append(accuracy)
-        accuracies_rdcm.append(accuracy_rdcm_both)
+        accuracies_boldgen.append(accuracy_boldgen_both)
         accuracies_crvae.append(accuracy_crvae_both)
     
     result = {}
     result['orig'] = accuracies
-    result['rDCM-GEN'] = accuracies_rdcm
+    result['BOLDGEN'] = accuracies_boldgen
     result['CR-VAE'] = accuracies_crvae
     
     os.makedirs(os.path.join(config['path_save'], 'SF', config['case']), exist_ok=True)
@@ -176,14 +176,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate preservation of individual functional-connectivity fingerprints.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcm', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--case', type=str, default="full_subsampled")
     args = parser.parse_args()
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcm'] = args.path_augmented_rdcm
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['case'] = args.case
     result = main(config)

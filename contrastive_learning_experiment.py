@@ -307,11 +307,11 @@ def main(config):
     test_data1 = preprocess_HCP(test_data1, config['case'])
     test_data2 = preprocess_HCP(test_data2, config['case'])
         
-    names_rdcm = []
-    with open(os.path.join(config['path_augmented_rdcm'],'names_rDCM-GEN_' + config['case'] + '.txt'), 'r') as f:
+    names_boldgen = []
+    with open(os.path.join(config['path_augmented_boldgen'],'names_BOLDGEN_' + config['case'] + '.txt'), 'r') as f:
         for line in f:
             temp = line.strip()
-            names_rdcm.append(temp)
+            names_boldgen.append(temp)
             
     names_crvae = []
     with open(os.path.join(config['path_augmented_crvae'],'names_CR-VAE_' + config['case'] + '.txt'), 'r') as f:
@@ -319,7 +319,7 @@ def main(config):
             temp = line.strip()
             names_crvae.append(temp)
             
-    augmented_rdcm = torch.load(os.path.join(config['path_augmented_rdcm'], 'augmented_rDCM-GEN_' + config['case'] + '.pt'))
+    augmented_boldgen = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_' + config['case'] + '.pt'))
     augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt'))
 
 
@@ -352,8 +352,8 @@ def main(config):
     
     for tau in config['taus']:
         for method in config['methods']:
-            if method == 'rDCM-GEN':
-                batch_sampler = BatchSampler(names_rdcm.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
+            if method == 'BOLDGEN':
+                batch_sampler = BatchSampler(names_boldgen.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
             elif method == 'CR-VAE':
                 batch_sampler = BatchSampler(names_crvae.copy(), batch_size=batch_size,shuffle=shuffle,drop_last=True)
             else:
@@ -382,12 +382,12 @@ def main(config):
                     total_loss = 0.0
                     batch_count = 0                              
                     for batch_idx, sample_inds in enumerate(train_loader.batch_sampler):
-                        if 'rDCM-GEN' in method:
-                            batch_data_rdcm = augmented_rdcm[sample_inds]
+                        if 'BOLDGEN' in method:
+                            batch_data_boldgen = augmented_boldgen[sample_inds]
                             idx = torch.randint(0, 8, (len(sample_inds),))
-                            batch_data1 = batch_data_rdcm[torch.arange(len(sample_inds)), idx]
+                            batch_data1 = batch_data_boldgen[torch.arange(len(sample_inds)), idx]
                             idx = torch.randint(8, 15, (len(sample_inds),))
-                            batch_data2 = batch_data_rdcm[torch.arange(len(sample_inds)), idx]
+                            batch_data2 = batch_data_boldgen[torch.arange(len(sample_inds)), idx]
                             batch_data = [batch_data1.to(device), batch_data2.to(device)]
                         elif 'CR-VAE' in method:
                             batch_data_crvae = augmented_crvae[sample_inds]
@@ -456,9 +456,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pretrain a Transformer encoder using subject-specific contrastive views.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcm', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
-    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','rDCM-GEN'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['CR-VAE','BOLDGEN'])
     parser.add_argument('--atlas', type=str, default='SCH')
     parser.add_argument('--case', type=str, default="full_subsampled")
     parser.add_argument('--TR', type=float, default=0.72)
@@ -481,7 +481,7 @@ if __name__ == '__main__':
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcm'] = args.path_augmented_rdcm
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['methods'] = args.methods  
     config['atlas'] = args.atlas

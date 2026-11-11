@@ -39,16 +39,16 @@ from sklearn.metrics import roc_auc_score, f1_score
 
 
 MODELS = {
-    "ASD-DiagNet": ["ABIDEI", "TimeVAE", "TimeGAN", "T2I-Diff", "DSFM", "CR-VAE", "rDCM-GEN"],
-    "BolT": ["ABIDEI", "TimeVAE", "TimeGAN", "T2I-Diff", "DSFM", "CR-VAE", "rDCM-GEN"],
-    "VarCoNet": ["ABIDEI", "CR-VAE", "rDCM-GEN"],
+    "ASD-DiagNet": ["ABIDEI", "TimeVAE", "TimeGAN", "T2I-Diff", "DSFM", "CR-VAE", "BOLDGEN"],
+    "BolT": ["ABIDEI", "TimeVAE", "TimeGAN", "T2I-Diff", "DSFM", "CR-VAE", "BOLDGEN"],
+    "VarCoNet": ["ABIDEI", "CR-VAE", "BOLDGEN"],
 }
 COLORS = {
     "ABIDEI": "#64748B", "TimeVAE": "#8D9BAC", "TimeGAN": "#9274B2",
     "T2I-Diff": "#D69443", "DSFM": "#82A45E",
-    "CR-VAE": "#C46A65", "rDCM-GEN": "#147C85",
+    "CR-VAE": "#C46A65", "BOLDGEN": "#147C85",
 }
-LABELS = {"ABIDEI": "ABIDE I", "T2I-Diff": "T2I-Diff", "CR-VAE": "CR-VAE", "rDCM-GEN": "rDCM-GEN"}
+LABELS = {"ABIDEI": "ABIDE I", "T2I-Diff": "T2I-Diff", "CR-VAE": "CR-VAE", "BOLDGEN": "BOLDGEN"}
 FOLDERS = {m: m for methods in MODELS.values() for m in methods}
 METRICS = ("AUC", "F1")
 AUC_YLIMS = {"ASD-DiagNet": (40, 75), "BolT": (40, 75), "VarCoNet": (65, 80)}

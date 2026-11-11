@@ -80,7 +80,7 @@ def main(config):
             y = (y - np.mean(y, axis=0, keepdims=True))/np.std(y, axis=0, keepdims=True)
         train_data.append(y)
             
-    augmented_rdcmgen = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_' + config['case'] + '.pt')).numpy()
+    augmented_boldgen = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_' + config['case'] + '.pt')).numpy()
     augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_' + config['case'] + '.pt')).numpy()
     augmented_timevae = np.load(os.path.join(config['path_augmented_timevae'], config['case'], 'timeVAE_' + config['case'] + '_prior_samples.npy'))
     augmented_timegan = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_HCP_2026_' + config['case'] + '.npy'))
@@ -89,7 +89,7 @@ def main(config):
     
     i = 26 #10, 13, 23
     data = train_data[i]
-    data_rdcmgen = augmented_rdcmgen[i,7][:data.shape[0]] #1, 7
+    data_boldgen = augmented_boldgen[i,7][:data.shape[0]] #1, 7
     data_crvae = augmented_crvae[i,5][:data.shape[0]] #2, 5
     data_timevae = augmented_timevae[0][:data.shape[0]]
     data_timevae = (data_timevae - np.mean(data_timevae, axis=0, keepdims=True))/np.std(data_timevae, axis=0, keepdims=True)
@@ -119,14 +119,14 @@ def main(config):
     
     plot_three_subplots(x, data_dsfm, 'DSFM', config['case'], 'time_series_DSFM.png')
     
-    plot_three_subplots(x, data_rdcmgen, 'rDCM-GEN', config['case'], 'time_series_rDCM-GEN.png')
+    plot_three_subplots(x, data_boldgen, 'BOLDGEN', config['case'], 'time_series_BOLDGEN.png')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Visualize empirical and generated regional BOLD time series.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--path_augmented_timevae', type=str, required=True)
     parser.add_argument('--path_augmented_timegan', type=str, required=True)
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['path_augmented_timevae'] = args.path_augmented_timevae
     config['path_augmented_timegan'] = args.path_augmented_timegan

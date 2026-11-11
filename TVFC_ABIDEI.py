@@ -48,8 +48,8 @@ def main(config):
 
     augmented_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'augmented_CR-VAE_ABIDEI.pt'))
     labels_crvae = torch.load(os.path.join(config['path_augmented_crvae'], 'labels_augmented_CR-VAE_ABIDEI.pt'))
-    augmented_rdcmgen = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'augmented_rDCM-GEN_ABIDEI.pt'))
-    labels_rdcmgen = torch.load(os.path.join(config['path_augmented_rdcmgen'], 'labels_augmented_rDCM-GEN_ABIDEI.pt'))
+    augmented_boldgen = torch.load(os.path.join(config['path_augmented_boldgen'], 'augmented_BOLDGEN_ABIDEI.pt'))
+    labels_boldgen = torch.load(os.path.join(config['path_augmented_boldgen'], 'labels_augmented_BOLDGEN_ABIDEI.pt'))
     augmented_timevae = np.load(os.path.join(config['path_augmented_timevae'], 'ABIDEI_NC', 'timeVAE_ABIDEI_NC_prior_samples.npy'))
     augmented_timegan = np.load(os.path.join(config['path_augmented_timegan'], 'augmented_TimeGAN_ABIDEI_NC.npy'))
     augmented_t2idiff = np.load(os.path.join(config['path_augmented_t2idiff'], 'ABIDEI', 'gen_sig_ABIDEI_fold1.npy'))
@@ -58,12 +58,12 @@ def main(config):
     pos = torch.where(labels_crvae == 0)[0]
     augmented_crvae = augmented_crvae[pos]
     
-    pos = torch.where(labels_rdcmgen == 0)[0]
-    augmented_rdcmgen = augmented_rdcmgen[pos]
+    pos = torch.where(labels_boldgen == 0)[0]
+    augmented_boldgen = augmented_boldgen[pos]
     
     T,R = train_data[0].shape            
-    data_rdcmgen = augmented_rdcmgen[:config['subjects']]
-    data_rdcmgen = data_rdcmgen[:,0,:,:]
+    data_boldgen = augmented_boldgen[:config['subjects']]
+    data_boldgen = data_boldgen[:,0,:,:]
     data_crvae = augmented_crvae[:config['subjects']]
     data_crvae = data_crvae[:,0,:,:]
     data_timegan = torch.from_numpy(augmented_timegan[:config['subjects']])
@@ -108,7 +108,7 @@ def main(config):
             plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
     
-    if 'CRVAE' in config['methods']:
+    if 'CR-VAE' in config['methods']:
         x_all = []
         for dat in data_crvae:
             for i in range(T - config['wind'] + 1):
@@ -186,7 +186,7 @@ def main(config):
             plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "TimeGAN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
             
-    if 'T2IDIFF' in config['methods']:
+    if 'T2I-Diff' in config['methods']:
         x_all = []
         for dat in data_t2idiff:
             for i in range(T - config['wind'] + 1):
@@ -238,9 +238,9 @@ def main(config):
             plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "DSFM_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
 
-    if 'rDCM-GEN' in config['methods']:
+    if 'BOLDGEN' in config['methods']:
         x_all = []
-        for dat in data_rdcmgen:
+        for dat in data_boldgen:
             for i in range(T - config['wind'] + 1):
                 x = dat[i:i+config['wind']]
                 x = np.corrcoef(x.T)
@@ -261,7 +261,7 @@ def main(config):
             plt.xticks([])
             plt.yticks([])
             os.makedirs(os.path.join('plots', 'TVFC', 'ABIDEI'), exist_ok=True)
-            plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "rDCM-GEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
+            plt.savefig(os.path.join("plots","TVFC", 'ABIDEI', "BOLDGEN_state_" + str(i) + ".png"), dpi=600, bbox_inches='tight')
             plt.show()
 
 
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Estimate and compare sliding-window functional brain states on ABIDE I.')
     parser.add_argument('--path_data', type=str, required=True)
     parser.add_argument('--path_save', type=str, required=True)
-    parser.add_argument('--path_augmented_rdcmgen', type=str, required=True)
+    parser.add_argument('--path_augmented_boldgen', type=str, required=True)
     parser.add_argument('--path_augmented_crvae', type=str, required=True)
     parser.add_argument('--path_augmented_timevae', type=str, required=True)
     parser.add_argument('--path_augmented_timegan', type=str, required=True)
@@ -283,12 +283,12 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default="cuda:2")
     parser.add_argument('--wind', type=int, default=30)
     parser.add_argument('--subjects', type=int, default=200)
-    parser.add_argument('--methods', nargs="+", type=str, default=['ABIDEI', 'rDCM-GEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'])
+    parser.add_argument('--methods', nargs="+", type=str, default=['ABIDEI', 'BOLDGEN', 'CR-VAE', 'TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM'])
     args = parser.parse_args()
     config = {}
     config['path_data'] = args.path_data
     config['path_save'] = args.path_save
-    config['path_augmented_rdcmgen'] = args.path_augmented_rdcmgen
+    config['path_augmented_boldgen'] = args.path_augmented_boldgen
     config['path_augmented_crvae'] = args.path_augmented_crvae
     config['path_augmented_timevae'] = args.path_augmented_timevae
     config['path_augmented_timegan'] = args.path_augmented_timegan

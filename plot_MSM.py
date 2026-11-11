@@ -19,8 +19,8 @@ SETTINGS = [
     ('half_original', '7 min, TR = 0.72 s'),
     ('half_subsampled', '7 min, TR = 2.0 s'),
 ]
-METHODS = ['TimeVAE', 'TimeGAN', 'T2I-DIFF', 'DSFM', 'CR-VAE', 'rDCM-GEN']
-NAMES = ['TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM', 'CR-VAE', 'rDCM-GEN']
+METHODS = ['TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM', 'CR-VAE', 'BOLDGEN']
+NAMES = ['TimeVAE', 'TimeGAN', 'T2I-Diff', 'DSFM', 'CR-VAE', 'BOLDGEN']
 COLORS = ['#708197', '#9270B4', '#D49343', '#7DA25B', '#C36B65', '#177D86']
 FOLDERS = {m: m for m in METHODS}
 HCP_FOLDER = 'HCP'
